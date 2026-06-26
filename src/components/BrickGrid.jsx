@@ -62,7 +62,12 @@ function boardColors(type, width, height) {
       set(Math.round(x0 + ((x1 - x0) * i) / count), Math.round(y0 + ((y1 - y0) * i) / count), color);
     }
   };
-  const nodes = [[2, 2], [8, 1], [13, 3], [5, 6], [11, 7], [3, 9], [9, 10]];
+  // Node layout authored on a 16x11 grid; scale to the actual board size.
+  const sx = width / 16;
+  const sy = height / 11;
+  const nodes = [[2, 2], [8, 1], [13, 3], [5, 6], [11, 7], [3, 9], [9, 10]].map(
+    ([x, y]) => [Math.round(x * sx), Math.round(y * sy)]
+  );
   [[0, 1], [1, 2], [0, 3], [3, 4], [1, 4], [4, 6], [3, 5], [5, 6], [2, 4]].forEach(([a, b]) => {
     line(nodes[a][0], nodes[a][1], nodes[b][0], nodes[b][1], LEGO.darkGray);
   });
@@ -78,7 +83,7 @@ function boardColors(type, width, height) {
   return cells;
 }
 
-export function BrickGrid({ type, width = 16, height = 11 }) {
+export function BrickGrid({ type, width = 20, height = 14 }) {
   return (
     <div className="brick-grid" style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
       {boardColors(type, width, height).map((color, index) => (

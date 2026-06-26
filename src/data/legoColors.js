@@ -44,6 +44,22 @@ export function rgba(color, alpha = color.alpha ?? 1) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+const clampChannel = (n) => Math.max(0, Math.min(255, Math.round(n)));
+
+// Light-consistent shading from a base color. `amount` in [-1, 1]:
+// positive lightens (tint), negative darkens (shade). Returns an rgba string.
+export function mixColor(color, amount, alpha = color.alpha ?? 1) {
+  const { r, g, b } = hexToRgb(color.value);
+  const target = amount >= 0 ? 255 : 0;
+  const k = Math.abs(amount);
+  return `rgba(${clampChannel(r + (target - r) * k)}, ${clampChannel(
+    g + (target - g) * k
+  )}, ${clampChannel(b + (target - b) * k)}, ${alpha})`;
+}
+
+export const tint = (color, amount, alpha) => mixColor(color, Math.abs(amount), alpha);
+export const shade = (color, amount, alpha) => mixColor(color, -Math.abs(amount), alpha);
+
 export const heroRamp = [
   legoColor("blue"),
   legoColor("mediumAzure"),

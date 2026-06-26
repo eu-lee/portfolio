@@ -255,11 +255,11 @@ h3 {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(145deg, rgba(255,255,255,.18), transparent 34%, rgba(0,0,0,.12) 100%),
+    linear-gradient(150deg, rgba(255,255,255,.1), transparent 45%, rgba(0,0,0,.2) 100%),
     var(--lego-color);
   box-shadow:
-    inset 1px 1px 0 rgba(255,255,255,.18),
-    inset -1px -1px 0 color-mix(in srgb, var(--lego-edge) 48%, transparent);
+    inset 1px 1px 0 rgba(255,255,255,.1),
+    inset -1px -1px 0 color-mix(in srgb, var(--lego-edge) 38%, transparent);
 }
 
 .brick-cell::before,
@@ -279,16 +279,16 @@ h3 {
 }
 
 .brick-cell::after {
-  width: 56%;
-  height: 56%;
-  border: max(1px, .08em) solid color-mix(in srgb, var(--lego-edge) 60%, transparent);
+  width: 62%;
+  height: 62%;
+  border: max(1px, .05em) solid color-mix(in srgb, var(--lego-edge) 45%, transparent);
   background:
-    linear-gradient(145deg, rgba(255,255,255,.16), transparent 42%, rgba(0,0,0,.08) 100%),
-    linear-gradient(180deg, transparent 0 68%, rgba(0,0,0,.18) 68% 100%),
-    var(--lego-color);
+    linear-gradient(145deg, rgba(255,255,255,.16), transparent 50%, rgba(0,0,0,.24) 100%),
+    color-mix(in srgb, var(--lego-color) 86%, white);
   box-shadow:
-    inset 0 .07em 0 rgba(255,255,255,.16),
-    inset 0 -.16em .08em rgba(0,0,0,.18);
+    .1em .14em .16em rgba(0,0,0,.45),
+    inset 0 .05em 0 rgba(255,255,255,.12),
+    inset 0 -.12em .08em rgba(0,0,0,.26);
 }
 
 .stud-logo {
@@ -324,11 +324,12 @@ h3 {
 
 .brick-cell.is-translucent::after {
   background:
-    linear-gradient(145deg, rgba(255,255,255,.34), rgba(255,255,255,.08) 46%, rgba(0,0,0,.08) 100%),
+    linear-gradient(145deg, rgba(255,255,255,.3), rgba(255,255,255,.06) 46%, rgba(0,0,0,.12) 100%),
     var(--lego-color);
   box-shadow:
-    inset .07em .07em 0 rgba(255,255,255,.32),
-    inset -.07em -.07em 0 rgba(0,0,0,.1);
+    .09em .12em .14em rgba(0,0,0,.3),
+    inset .06em .06em 0 rgba(255,255,255,.28),
+    inset -.06em -.06em 0 rgba(0,0,0,.14);
 }
 
 .brick-cell.is-translucent::before {
