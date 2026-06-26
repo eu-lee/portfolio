@@ -14,15 +14,7 @@ export const LEGO_COLORS = {
   darkRed: { name: "Dark Red", value: "#720012", edge: "#333333", alpha: 1 },
   mediumAzure: { name: "Medium Azure", value: "#68C3E2", edge: "#333333", alpha: 1 },
   brightLightOrange: { name: "Bright Light Orange", value: "#FCAC00", edge: "#333333", alpha: 1 },
-  brightLightBlue: { name: "Bright Light Blue", value: "#9DC3F7", edge: "#333333", alpha: 1 },
-  transDarkBlue: { name: "Trans Dark Blue", value: "#0020A0", edge: "#000B38", alpha: 128 / 255, transparent: true },
-  transGreen: { name: "Trans Green", value: "#237841", edge: "#174F2B", alpha: 128 / 255, transparent: true },
-  transRed: { name: "Trans Red", value: "#C91A09", edge: "#660D05", alpha: 128 / 255, transparent: true },
-  transYellow: { name: "Trans Yellow", value: "#F5CD2F", edge: "#B49208", alpha: 128 / 255, transparent: true },
-  transClear: { name: "Trans Clear", value: "#FCFCFC", edge: "#C9C9C9", alpha: 128 / 255, transparent: true },
-  transLightBlue: { name: "Trans Light Blue", value: "#AEE9EF", edge: "#59D1DE", alpha: 128 / 255, transparent: true },
-  transOrange: { name: "Trans Orange", value: "#F08F1C", edge: "#9E5C0A", alpha: 128 / 255, transparent: true },
-  transPurple: { name: "Trans Purple", value: "#A5A5CB", edge: "#6464A6", alpha: 128 / 255, transparent: true }
+  brightLightBlue: { name: "Bright Light Blue", value: "#9DC3F7", edge: "#333333", alpha: 1 }
 };
 
 export function legoColor(key) {
@@ -67,7 +59,5 @@ export const heroRamp = [
   legoColor("lime"),
   legoColor("yellow"),
   legoColor("orange"),
-  legoColor("red"),
-  legoColor("transLightBlue"),
-  legoColor("transOrange")
+  legoColor("red")
 ];

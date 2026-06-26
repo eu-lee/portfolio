@@ -11,11 +11,7 @@ const LEGO = {
   white: legoColor("white"),
   gray: legoColor("lightBluishGray"),
   lightGray: legoColor("lightBluishGray"),
-  darkGray: legoColor("darkBluishGray"),
-  transClear: legoColor("transClear"),
-  transBlue: legoColor("transLightBlue"),
-  transOrange: legoColor("transOrange"),
-  transRed: legoColor("transRed")
+  darkGray: legoColor("darkBluishGray")
 };
 
 function boardColors(type, width, height) {
@@ -25,7 +21,7 @@ function boardColors(type, width, height) {
   };
 
   if (type === "heat") {
-    const ramp = [LEGO.blue, LEGO.azure, LEGO.transBlue, LEGO.yellow, LEGO.transOrange, LEGO.orange, LEGO.red];
+    const ramp = [LEGO.blue, LEGO.azure, LEGO.green, LEGO.lime, LEGO.yellow, LEGO.orange, LEGO.red];
     return cells.map((_, index) => {
       const x = index % width;
       const y = Math.floor(index / width);
@@ -41,7 +37,7 @@ function boardColors(type, width, height) {
       const x = index % width;
       const y = Math.floor(index / width);
       const band = Math.floor(y / 2);
-      return (x + band) % 6 === 0 ? LEGO.transClear : ramp[band % ramp.length];
+      return (x + band) % 6 === 0 ? LEGO.white : ramp[band % ramp.length];
     });
   }
 
@@ -88,7 +84,7 @@ export function BrickGrid({ type, width = 20, height = 14 }) {
     <div className="brick-grid" style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
       {boardColors(type, width, height).map((color, index) => (
         <span
-          className={`brick-cell${color.transparent ? " is-translucent" : ""}`}
+          className="brick-cell"
           style={{
             "--lego-color": rgba(color),
             "--lego-solid": color.value,

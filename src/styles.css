@@ -311,38 +311,6 @@ h3 {
   user-select: none;
 }
 
-.brick-cell.is-translucent {
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.36), rgba(255,255,255,.08) 28%, rgba(0,0,0,.16) 100%),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.14) 0 12%, transparent 12% 24%),
-    color-mix(in srgb, var(--lego-color) 90%, black);
-  box-shadow:
-    inset 1px 1px 0 rgba(255,255,255,.36),
-    inset -1px -1px 0 color-mix(in srgb, var(--lego-edge) 40%, transparent),
-    inset 0 0 .35em rgba(255,255,255,.14);
-}
-
-.brick-cell.is-translucent::after {
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.3), rgba(255,255,255,.06) 46%, rgba(0,0,0,.12) 100%),
-    color-mix(in srgb, var(--lego-color) 92%, white);
-  box-shadow:
-    .09em .12em .14em rgba(0,0,0,.3),
-    inset .06em .06em 0 rgba(255,255,255,.28),
-    inset -.06em -.06em 0 rgba(0,0,0,.14);
-}
-
-.brick-cell.is-translucent::before {
-  opacity: .38;
-}
-
-.brick-cell.is-translucent .stud-logo {
-  text-shadow:
-    0 -.035em 0 rgba(255,255,255,.3),
-    0 .035em 0 rgba(0,0,0,.12),
-    0 0 .02em rgba(255,255,255,.12);
-}
-
 .project-reveal {
   display: grid;
   place-items: center;

@@ -24,17 +24,15 @@ function surfaceJitter(x, y) {
 // toward the bottom-right. Every term below is derived from that one choice.
 function drawStud(ctx, x, y, size, color) {
   const alpha = color.alpha ?? 1;
-  const trans = !!color.transparent;
-  const k = trans ? 0.6 : 1; // translucent plastic occludes/shades less
 
   // --- Base plate: darker than the raised stud top. ---
-  ctx.fillStyle = mixColor(color, trans ? -0.06 : -0.12, alpha);
+  ctx.fillStyle = mixColor(color, -0.12, alpha);
   ctx.fillRect(x, y, size, size);
 
   const plateShade = ctx.createLinearGradient(x, y, x + size, y + size);
-  plateShade.addColorStop(0, `rgba(255,255,255,${0.11 * k})`);
+  plateShade.addColorStop(0, "rgba(255,255,255,0.11)");
   plateShade.addColorStop(0.5, "rgba(255,255,255,0)");
-  plateShade.addColorStop(1, `rgba(0,0,0,${0.2 * k})`);
+  plateShade.addColorStop(1, "rgba(0,0,0,0.2)");
   ctx.fillStyle = plateShade;
   ctx.fillRect(x, y, size, size);
 
@@ -44,12 +42,12 @@ function drawStud(ctx, x, y, size, color) {
   //     the points where four studs meet clump up dark. ---
   const groove = Math.max(1, size * 0.05);
   const lit = groove * 0.7;
-  ctx.fillStyle = `rgba(0,0,0,${0.32 * k})`; // shadow side: bottom + right
+  ctx.fillStyle = "rgba(0,0,0,0.32)"; // shadow side: bottom + right
   ctx.beginPath();
   ctx.rect(x, y + size - groove, size, groove);
   ctx.rect(x + size - groove, y, groove, size);
   ctx.fill();
-  ctx.fillStyle = `rgba(255,255,255,${0.14 * k})`; // lit side: thin top + left catch
+  ctx.fillStyle = "rgba(255,255,255,0.14)"; // lit side: thin top + left catch
   ctx.beginPath();
   ctx.rect(x, y, size, lit);
   ctx.rect(x, y, lit, size);
@@ -67,8 +65,8 @@ function drawStud(ctx, x, y, size, color) {
   const shx = cx + size * 0.04;
   const shy = cy + wallH + size * 0.045;
   const shadow = ctx.createRadialGradient(shx, shy, topR * 0.15, shx, shy, topR * 1.05);
-  shadow.addColorStop(0, `rgba(0,0,0,${0.44 * k})`);
-  shadow.addColorStop(0.65, `rgba(0,0,0,${0.16 * k})`);
+  shadow.addColorStop(0, "rgba(0,0,0,0.44)");
+  shadow.addColorStop(0.65, "rgba(0,0,0,0.16)");
   shadow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = shadow;
   ctx.beginPath();
@@ -88,7 +86,7 @@ function drawStud(ctx, x, y, size, color) {
 
   // --- Top face: flat, and lighter than the recessed base plate so the
   //     raised circle reads as a distinct molded disc. ---
-  ctx.fillStyle = mixColor(color, trans ? 0.05 : 0.1, alpha);
+  ctx.fillStyle = mixColor(color, 0.1, alpha);
   ctx.beginPath();
   ctx.arc(cx, cy, topR, 0, Math.PI * 2);
   ctx.fill();
@@ -96,9 +94,9 @@ function drawStud(ctx, x, y, size, color) {
   // Matte diffuse: a single light from the top-left grades the flat top from
   // lit (upper-left) to shadowed (lower-right). No specular — fully matte.
   const topFace = ctx.createLinearGradient(cx - topR, cy - topR, cx + topR, cy + topR);
-  topFace.addColorStop(0, `rgba(255,255,255,${trans ? 0.2 : 0.16})`);
+  topFace.addColorStop(0, "rgba(255,255,255,0.16)");
   topFace.addColorStop(0.5, "rgba(255,255,255,0)");
-  topFace.addColorStop(1, `rgba(0,0,0,${trans ? 0.14 : 0.24})`);
+  topFace.addColorStop(1, "rgba(0,0,0,0.24)");
   ctx.fillStyle = topFace;
   ctx.beginPath();
   ctx.arc(cx, cy, topR, 0, Math.PI * 2);
@@ -106,7 +104,7 @@ function drawStud(ctx, x, y, size, color) {
 
   // Molded top edge ring (defines the flat circular rim).
   ctx.lineWidth = Math.max(1, size * 0.028);
-  ctx.strokeStyle = mixColor(color, -0.46, trans ? 0.5 : 0.62);
+  ctx.strokeStyle = mixColor(color, -0.46, 0.62);
   ctx.beginPath();
   ctx.arc(cx, cy, topR - ctx.lineWidth * 0.5, 0, Math.PI * 2);
   ctx.stroke();
@@ -123,11 +121,11 @@ function drawStud(ctx, x, y, size, color) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = `900 ${Math.max(3, size * 0.155)}px Arial, sans-serif`;
-    ctx.fillStyle = `rgba(0,0,0,${trans ? 0.18 : 0.26})`; // shadow toward lower-right
+    ctx.fillStyle = "rgba(0,0,0,0.26)"; // shadow toward lower-right
     ctx.fillText("LEGO", size * 0.012, size * 0.014);
-    ctx.fillStyle = `rgba(255,255,255,${trans ? 0.32 : 0.24})`; // catch toward upper-left
+    ctx.fillStyle = "rgba(255,255,255,0.24)"; // catch toward upper-left
     ctx.fillText("LEGO", -size * 0.012, -size * 0.014);
-    ctx.fillStyle = mixColor(color, trans ? 0.04 : 0.08, alpha); // face of the letters
+    ctx.fillStyle = mixColor(color, 0.08, alpha); // face of the letters
     ctx.fillText("LEGO", 0, 0);
   }
   ctx.restore();
