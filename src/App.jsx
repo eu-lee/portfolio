@@ -1,21 +1,28 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { filters, projects } from "./data/projects.js";
 import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
 import { ProjectCard } from "./components/ProjectCard.jsx";
 
+function navigateTo(path) {
+  window.history.pushState({}, "", path);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
 function Hero() {
   return (
-    <section className="hero" id="home">
+    <section className="hero">
       <BrickCanvas />
       <div className="hero-panel">
         <p className="eyebrow">Software Engineering · University of Waterloo</p>
         <h1>Eugene Lee</h1>
         <nav className="hero-nav" aria-label="Primary navigation">
-          <a href="#projects">Projects</a>
-          <a href="#build-system">Build</a>
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
+          <a href="/projects" onClick={(event) => {
+            event.preventDefault();
+            navigateTo("/projects");
+          }}>
+            Projects
+          </a>
         </nav>
         <p>
           I build with algorithms, machine learning, and transformers, assembled
@@ -34,12 +41,18 @@ function Projects({ onOpenProject }) {
   }, [activeFilter]);
 
   return (
-    <section className="section" id="projects">
+    <section className="section projects-page">
       <div className="section-heading">
         <div>
           <p className="eyebrow">Selected work</p>
           <h2>Brick covers, real project details.</h2>
         </div>
+        <a className="back-link" href="/" onClick={(event) => {
+          event.preventDefault();
+          navigateTo("/");
+        }}>
+          Home
+        </a>
         <div className="filter-group" role="tablist" aria-label="Project filter">
           {filters.map((filter) => (
             <button
@@ -59,95 +72,6 @@ function Projects({ onOpenProject }) {
         {visibleProjects.map((project) => (
           <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />
         ))}
-      </div>
-    </section>
-  );
-}
-
-function BuildSystem() {
-  return (
-    <section className="section build-section" id="build-system">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Build system</p>
-          <h2>Portfolio components as studs.</h2>
-        </div>
-      </div>
-      <div className="build-layout">
-        <div className="spec-panel">
-          <span className="spec-stud stud stud-red" aria-hidden="true" />
-          <div>
-            <h3>The 1x1 stud</h3>
-            <p>
-              Every cover is generated from a small data grid, using real
-              LEGO-inspired colors and a reusable highlight/shadow treatment.
-            </p>
-          </div>
-        </div>
-        <div className="palette" aria-label="LEGO-inspired color palette">
-          <span style={{ "--swatch": "#C91A09" }}>Bright Red</span>
-          <span style={{ "--swatch": "#0B5FA5" }}>Bright Blue</span>
-          <span style={{ "--swatch": "#1E9DD5" }}>Medium Azure</span>
-          <span style={{ "--swatch": "#F2CD37" }}>Bright Yellow</span>
-          <span style={{ "--swatch": "#FE8A18" }}>Orange</span>
-          <span style={{ "--swatch": "#3A8C3F" }}>Green</span>
-          <span style={{ "--swatch": "#A6C520" }}>Lime</span>
-          <span style={{ "--swatch": "#F4F5F2" }}>White</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function About() {
-  return (
-    <section className="section about-section" id="about">
-      <div>
-        <p className="eyebrow">About</p>
-        <h2>Software engineer focused on the small pieces that make systems work.</h2>
-        <p>
-          I like work where rigorous implementation meets visible behavior:
-          search, visualization, model tooling, developer experience, and
-          interfaces that help people reason through complex systems.
-        </p>
-      </div>
-      <div className="brick-stack" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-    </section>
-  );
-}
-
-function Contact() {
-  const [copied, setCopied] = useState(false);
-
-  async function copyEmail() {
-    await navigator.clipboard.writeText("eugene@example.com");
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
-  }
-
-  return (
-    <section className="section contact-section" id="contact">
-      <div>
-        <p className="eyebrow">Contact</p>
-        <h2>Let’s build something.</h2>
-        <p>
-          Replace these links with your real email, GitHub, LinkedIn, and resume
-          when you are ready.
-        </p>
-      </div>
-      <div className="contact-actions">
-        <a href="mailto:eugene@example.com">Email</a>
-        <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a>
-        <button type="button" onClick={copyEmail}>Copy email</button>
-      </div>
-      <div className={`toast${copied ? " is-visible" : ""}`} role="status" aria-live="polite">
-        Email copied
       </div>
     </section>
   );
@@ -188,15 +112,24 @@ function ProjectDialog({ project, onClose }) {
 
 export default function App() {
   const [selectedProject, setSelectedProject] = useState(null);
+  const [path, setPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const isProjectsPage = path === "/projects";
 
   return (
     <>
-      <main>
-        <Hero />
-        <Projects onOpenProject={setSelectedProject} />
-        <BuildSystem />
-        <About />
-        <Contact />
+      <main className={isProjectsPage ? "app-shell projects-shell" : "app-shell home-shell"}>
+        {isProjectsPage ? (
+          <Projects onOpenProject={setSelectedProject} />
+        ) : (
+          <Hero />
+        )}
       </main>
       <ProjectDialog project={selectedProject} onClose={() => setSelectedProject(null)} />
     </>
