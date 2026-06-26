@@ -1,15 +1,21 @@
+import { legoColor, rgba } from "../data/legoColors.js";
+
 const LEGO = {
-  red: "#C91A09",
-  blue: "#0B5FA5",
-  azure: "#1E9DD5",
-  yellow: "#F2CD37",
-  orange: "#FE8A18",
-  green: "#3A8C3F",
-  lime: "#A6C520",
-  white: "#F4F5F2",
-  gray: "#9DA3A0",
-  lightGray: "#C7CCC7",
-  darkGray: "#5B5E5A"
+  red: legoColor("red"),
+  blue: legoColor("blue"),
+  azure: legoColor("mediumAzure"),
+  yellow: legoColor("yellow"),
+  orange: legoColor("orange"),
+  green: legoColor("green"),
+  lime: legoColor("lime"),
+  white: legoColor("white"),
+  gray: legoColor("lightBluishGray"),
+  lightGray: legoColor("lightBluishGray"),
+  darkGray: legoColor("darkBluishGray"),
+  transClear: legoColor("transClear"),
+  transBlue: legoColor("transLightBlue"),
+  transOrange: legoColor("transOrange"),
+  transRed: legoColor("transRed")
 };
 
 function boardColors(type, width, height) {
@@ -19,7 +25,7 @@ function boardColors(type, width, height) {
   };
 
   if (type === "heat") {
-    const ramp = [LEGO.blue, LEGO.azure, LEGO.yellow, LEGO.orange, LEGO.red];
+    const ramp = [LEGO.blue, LEGO.azure, LEGO.transBlue, LEGO.yellow, LEGO.transOrange, LEGO.orange, LEGO.red];
     return cells.map((_, index) => {
       const x = index % width;
       const y = Math.floor(index / width);
@@ -35,7 +41,7 @@ function boardColors(type, width, height) {
       const x = index % width;
       const y = Math.floor(index / width);
       const band = Math.floor(y / 2);
-      return (x + band) % 6 === 0 ? LEGO.white : ramp[band % ramp.length];
+      return (x + band) % 6 === 0 ? LEGO.transClear : ramp[band % ramp.length];
     });
   }
 
@@ -76,7 +82,19 @@ export function BrickGrid({ type, width = 16, height = 11 }) {
   return (
     <div className="brick-grid" style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
       {boardColors(type, width, height).map((color, index) => (
-        <span className="brick-cell" style={{ backgroundColor: color }} key={`${type}-${index}`} />
+        <span
+          className={`brick-cell${color.transparent ? " is-translucent" : ""}`}
+          style={{
+            "--lego-color": rgba(color),
+            "--lego-solid": color.value,
+            "--lego-edge": color.edge,
+            "--lego-alpha": color.alpha
+          }}
+          title={color.name}
+          key={`${type}-${index}`}
+        >
+          <span className="stud-logo" aria-hidden="true">LEGO</span>
+        </span>
       ))}
     </div>
   );

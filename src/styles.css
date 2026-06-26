@@ -1,12 +1,12 @@
 :root {
-  --red: #C91A09;
-  --blue: #0B5FA5;
-  --azure: #1E9DD5;
-  --yellow: #F2CD37;
-  --orange: #FE8A18;
-  --green: #3A8C3F;
-  --lime: #A6C520;
-  --white: #F4F5F2;
+  --red: #B40000;
+  --blue: #1E5AA8;
+  --azure: #68C3E2;
+  --yellow: #FAC80A;
+  --orange: #D67923;
+  --green: #00852B;
+  --lime: #A5CA18;
+  --white: #F4F4F4;
   --ink: #16212B;
   --muted: #68706B;
   --line: #E5E7E3;
@@ -247,14 +247,99 @@ h3 {
 
 .brick-grid {
   display: grid;
+  background: rgba(0, 0, 0, .18);
   transition: opacity .35s ease;
 }
 
 .brick-cell {
-  background-image:
-    radial-gradient(circle at 40% 37%, rgba(255,255,255,.54) 0 30%, rgba(255,255,255,0) 38%),
-    radial-gradient(circle at center, rgba(0,0,0,0) 0 33%, rgba(0,0,0,.23) 42%, rgba(0,0,0,0) 53%),
-    radial-gradient(circle at 63% 67%, rgba(0,0,0,.16) 0 24%, rgba(0,0,0,0) 34%);
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.18), transparent 34%, rgba(0,0,0,.12) 100%),
+    var(--lego-color);
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.18),
+    inset -1px -1px 0 color-mix(in srgb, var(--lego-edge) 48%, transparent);
+}
+
+.brick-cell::before,
+.brick-cell::after,
+.stud-logo {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.brick-cell::before {
+  display: none;
+}
+
+.brick-cell::after {
+  width: 56%;
+  height: 56%;
+  border: max(1px, .08em) solid color-mix(in srgb, var(--lego-edge) 60%, transparent);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.16), transparent 42%, rgba(0,0,0,.08) 100%),
+    linear-gradient(180deg, transparent 0 68%, rgba(0,0,0,.18) 68% 100%),
+    var(--lego-color);
+  box-shadow:
+    inset 0 .07em 0 rgba(255,255,255,.16),
+    inset 0 -.16em .08em rgba(0,0,0,.18);
+}
+
+.stud-logo {
+  content: none;
+  z-index: 1;
+  width: 42%;
+  overflow: hidden;
+  text-align: center;
+  transform: translate(-50%, -50%) scaleX(.68) scaleY(1.72);
+  color: transparent;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(5px, .78vw, 9px);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-shadow:
+    0 -.035em 0 rgba(255,255,255,.22),
+    0 .035em 0 rgba(0,0,0,.16),
+    0 0 .02em rgba(255,255,255,.08);
+  user-select: none;
+}
+
+.brick-cell.is-translucent {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.36), rgba(255,255,255,.08) 28%, rgba(0,0,0,.16) 100%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.14) 0 12%, transparent 12% 24%),
+    var(--lego-color);
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.36),
+    inset -1px -1px 0 color-mix(in srgb, var(--lego-edge) 40%, transparent),
+    inset 0 0 .35em rgba(255,255,255,.14);
+}
+
+.brick-cell.is-translucent::after {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.34), rgba(255,255,255,.08) 46%, rgba(0,0,0,.08) 100%),
+    var(--lego-color);
+  box-shadow:
+    inset .07em .07em 0 rgba(255,255,255,.32),
+    inset -.07em -.07em 0 rgba(0,0,0,.1);
+}
+
+.brick-cell.is-translucent::before {
+  opacity: .38;
+}
+
+.brick-cell.is-translucent .stud-logo {
+  text-shadow:
+    0 -.035em 0 rgba(255,255,255,.3),
+    0 .035em 0 rgba(0,0,0,.12),
+    0 0 .02em rgba(255,255,255,.12);
 }
 
 .project-reveal {
