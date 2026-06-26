@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { heroRamp, mixColor, rgba } from "../data/legoColors.js";
+import { heroRamp, mixColor } from "../data/legoColors.js";
 
 function flowColor(x, y, t, w, h) {
   const fx = x / Math.max(1, w - 1);
@@ -26,10 +26,9 @@ function drawStud(ctx, x, y, size, color) {
   const alpha = color.alpha ?? 1;
   const trans = !!color.transparent;
   const k = trans ? 0.6 : 1; // translucent plastic occludes/shades less
-  const base = rgba(color);
 
-  // --- Base plate ---
-  ctx.fillStyle = base;
+  // --- Base plate: darker than the raised stud top. ---
+  ctx.fillStyle = mixColor(color, trans ? -0.06 : -0.12, alpha);
   ctx.fillRect(x, y, size, size);
 
   const plateShade = ctx.createLinearGradient(x, y, x + size, y + size);
@@ -77,9 +76,9 @@ function drawStud(ctx, x, y, size, color) {
   ctx.arc(cx, cy + wallH, topR, 0, Math.PI * 2);
   ctx.fill();
 
-  // --- Top face: flat, and a touch lighter than the recessed base plate
-  //     (the stud catches more light than the gaps around it). ---
-  ctx.fillStyle = mixColor(color, trans ? 0.06 : 0.14, alpha);
+  // --- Top face: flat, and lighter than the recessed base plate so the
+  //     raised circle reads as a distinct molded disc. ---
+  ctx.fillStyle = mixColor(color, trans ? 0.05 : 0.1, alpha);
   ctx.beginPath();
   ctx.arc(cx, cy, topR, 0, Math.PI * 2);
   ctx.fill();
