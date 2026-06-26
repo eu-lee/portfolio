@@ -61,16 +61,18 @@ function drawStud(ctx, x, y, size, color) {
   const topR = size * 0.31; // true LEGO 5mm/8mm => 0.625 diameter
   const wallH = size * 0.07; // visible cylinder wall (slight top-down view)
 
-  // --- Cast shadow on the plate (offset toward bottom-right) ---
-  const shx = cx + size * 0.06;
-  const shy = cy + wallH + size * 0.08;
-  const shadow = ctx.createRadialGradient(shx, shy, topR * 0.15, shx, shy, topR * 1.35);
-  shadow.addColorStop(0, `rgba(0,0,0,${0.48 * k})`);
-  shadow.addColorStop(0.7, `rgba(0,0,0,${0.18 * k})`);
+  // --- Cast shadow on the plate: a tight contact shadow tucked under the
+  //     stud's lower-right. Kept small so it fades before the corner/seam and
+  //     doesn't pool into a dark spot where bricks meet. ---
+  const shx = cx + size * 0.04;
+  const shy = cy + wallH + size * 0.045;
+  const shadow = ctx.createRadialGradient(shx, shy, topR * 0.15, shx, shy, topR * 1.05);
+  shadow.addColorStop(0, `rgba(0,0,0,${0.44 * k})`);
+  shadow.addColorStop(0.65, `rgba(0,0,0,${0.16 * k})`);
   shadow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = shadow;
   ctx.beginPath();
-  ctx.ellipse(shx, shy, topR * 1.3, topR * 0.96, 0, 0, Math.PI * 2);
+  ctx.ellipse(shx, shy, topR * 1.05, topR * 0.78, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // --- Cylinder wall: a body circle dropped below the top face shows as a
