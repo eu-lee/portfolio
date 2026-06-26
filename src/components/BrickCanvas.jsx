@@ -38,14 +38,22 @@ function drawStud(ctx, x, y, size, color) {
   ctx.fillStyle = plateShade;
   ctx.fillRect(x, y, size, size);
 
-  // --- Inter-brick seam (ambient occlusion in the gap) ---
+  // --- Inter-brick seam (ambient occlusion in the gap). Each side is drawn as
+  //     a single combined path filled once, so the bottom/right strips don't
+  //     double-darken where they overlap at the corner — which is what made
+  //     the points where four studs meet clump up dark. ---
   const groove = Math.max(1, size * 0.05);
-  ctx.fillStyle = `rgba(0,0,0,${0.36 * k})`; // shadow side: bottom + right
-  ctx.fillRect(x, y + size - groove, size, groove);
-  ctx.fillRect(x + size - groove, y, groove, size);
+  const lit = groove * 0.7;
+  ctx.fillStyle = `rgba(0,0,0,${0.32 * k})`; // shadow side: bottom + right
+  ctx.beginPath();
+  ctx.rect(x, y + size - groove, size, groove);
+  ctx.rect(x + size - groove, y, groove, size);
+  ctx.fill();
   ctx.fillStyle = `rgba(255,255,255,${0.14 * k})`; // lit side: thin top + left catch
-  ctx.fillRect(x, y, size, groove * 0.7);
-  ctx.fillRect(x, y, groove * 0.7, size);
+  ctx.beginPath();
+  ctx.rect(x, y, size, lit);
+  ctx.rect(x, y, lit, size);
+  ctx.fill();
 
   // --- Stud geometry ---
   const cx = x + size / 2;
