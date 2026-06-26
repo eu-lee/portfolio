@@ -1,7 +1,23 @@
-export function ProjectCard({ project }) {
+import { BrickGrid } from "./BrickGrid.jsx";
+
+export function ProjectCard({ project, onOpen }) {
   return (
-    <article className="project-card" aria-label={`${project.title} placeholder`}>
-      <div className="project-placeholder" />
+    <article className={`project-card${project.featured ? " is-featured" : ""}`}>
+      <button
+        className="project-cover"
+        style={{ "--accent": `var(--${project.accent})` }}
+        type="button"
+        onClick={() => onOpen(project)}
+      >
+        <BrickGrid type={project.board} />
+        <span className="project-reveal">
+          <span>
+            <span className="project-kind">{project.kind}</span>
+            <strong>{project.title}</strong>
+            <span className="project-open">Open details</span>
+          </span>
+        </span>
+      </button>
       <h3>{project.title}</h3>
       <p>{project.subtitle}</p>
     </article>
