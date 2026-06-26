@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+</style>
+</helmet>
+
+<!-- ============ CANVAS HEADER ============ -->
+<div style="position:absolute;left:80px;top:60px">
+  <div style="display:flex;align-items:center;gap:16px">
+    <div style="display:flex;gap:5px">
+      <sc-for list="{{ headStuds }}" as="c" hint-placeholder-count="4">
+        <div style="width:20px;height:20px;border-radius:50%;background-color:{{ c }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+      </sc-for>
+    </div>
+    <span style="font-family:'Space Grotesk';font-weight:700;font-size:23px;color:#1c2228;letter-spacing:-.01em">Eugene Lee — portfolio</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#919792">LEGO stud system · 3 cover directions + brick covers</span>
+  </div>
+</div>
+
+<!-- ============ FRAME A — BASEPLATE SPLIT ============ -->
+<div style="position:absolute;left:80px;top:150px;width:1280px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:rgba(40,44,48,.6)">A · BASEPLATE SPLIT — content left, baseplate right</div>
+  <div style="background:#fff;border-radius:3px;box-shadow:0 2px 16px rgba(0,0,0,.10);height:800px;overflow:hidden;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:26px 44px;border-bottom:1px solid #ECEEEA">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="width:22px;height:22px;border-radius:50%;background-color:#C91A09;background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+        <span style="font-weight:600;font-size:16px;letter-spacing:-.01em;color:#16212B">Eugene Lee</span>
+      </div>
+      <div style="display:flex;gap:30px;font-family:'IBM Plex Mono',monospace;font-size:13px">
+        <span style="font-weight:500;color:#16212B;border-bottom:2px solid #C91A09;padding-bottom:4px">Projects</span>
+        <span style="color:#8A8F8B">About</span>
+        <span style="color:#8A8F8B">Contact</span>
+      </div>
+    </div>
+    <div style="flex:1;display:flex">
+      <div style="width:55%;padding:0 56px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.13em;color:#A2968B;margin-bottom:24px">SOFTWARE ENGINEERING · UNIVERSITY OF WATERLOO</div>
+        <h1 style="margin:0;font-size:74px;line-height:.97;font-weight:700;letter-spacing:-.035em;color:#16212B">Eugene<br>Lee</h1>
+        <p style="margin:28px 0 0;font-size:18px;line-height:1.55;color:#4A4E4A;max-width:31ch">I build with algorithms, machine learning, and transformers — assembled one small piece at a time.</p>
+        <div style="display:flex;gap:10px;margin-top:36px">
+          <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="3">
+            <span style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#16212B;background:#F4F5F2;border:1px solid #E5E7E3;padding:8px 14px;border-radius:22px">
+              <i style="width:11px;height:11px;border-radius:50%;background-color:{{ ch.c }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%)"></i>{{ ch.t }}
+            </span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="width:45%;background:#EEEFEC;display:flex;align-items:center;justify-content:center;box-shadow:inset 22px 0 34px -30px rgba(0,0,0,.45)">
+        <div style="transform:rotate(-2.2deg);box-shadow:0 22px 36px -18px rgba(0,0,0,.42);border-radius:6px;overflow:hidden;outline:4px solid rgba(255,255,255,.65)">
+          <div style="display:grid;gap:0;grid-template-columns:{{ mono.gtc }};grid-auto-rows:{{ mono.cell }};width:{{ mono.wpx }};height:{{ mono.hpx }}">
+            <sc-for list="{{ mono.studs }}" as="s" hint-placeholder-count="200">
+              <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME B — FOLDED STUDDED HEADER ============ -->
+<div style="position:absolute;left:1440px;top:150px;width:1280px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:rgba(40,44,48,.6)">B · FOLDED HEADER — top half is a studded plate</div>
+  <div style="background:#fff;border-radius:3px;box-shadow:0 2px 16px rgba(0,0,0,.10);height:800px;overflow:hidden;display:flex;flex-direction:column">
+    <div style="position:relative;height:352px;overflow:hidden;background:#0B5FA5">
+      <div style="position:absolute;inset:0">
+        <div style="display:grid;gap:0;grid-template-columns:{{ plate.gtc }};grid-auto-rows:{{ plate.cell }};width:{{ plate.wpx }};height:{{ plate.hpx }}">
+          <sc-for list="{{ plate.studs }}" as="s" hint-placeholder-count="300">
+            <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,42,79,.32) 0%,rgba(7,42,79,0) 32%,rgba(7,42,79,0) 55%,rgba(7,42,79,.55) 100%)"></div>
+      <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:26px 44px">
+        <span style="font-weight:600;font-size:16px;color:#fff;letter-spacing:-.01em">Eugene Lee</span>
+        <div style="display:flex;gap:30px;font-family:'IBM Plex Mono',monospace;font-size:13px">
+          <span style="font-weight:500;color:#fff;border-bottom:2px solid #fff;padding-bottom:4px">Projects</span>
+          <span style="color:rgba(255,255,255,.7)">About</span>
+          <span style="color:rgba(255,255,255,.7)">Contact</span>
+        </div>
+      </div>
+      <div style="position:absolute;left:44px;bottom:30px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.13em;color:rgba(255,255,255,.85);margin-bottom:12px">SE @ WATERLOO · ALGORITHMS · ML · TRANSFORMERS</div>
+        <div style="font-size:60px;line-height:.95;font-weight:700;letter-spacing:-.03em;color:#fff">Eugene Lee</div>
+      </div>
+    </div>
+    <div style="position:relative;height:7px;background:#06325b;box-shadow:0 3px 8px rgba(0,0,0,.28)"></div>
+    <div style="flex:1;padding:38px 44px;display:flex;flex-direction:column">
+      <p style="margin:0;font-size:17px;line-height:1.55;color:#4A4E4A;max-width:54ch">I build with algorithms, machine learning, and transformers — assembled one small piece at a time. Below: a few things I've snapped together.</p>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;color:#919792;margin:30px 0 18px">SELECTED WORK</div>
+      <div style="display:flex;gap:30px">
+        <sc-for list="{{ bThumbs }}" as="t" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column">
+            <div style="position:relative;width:{{ t.wpx }};height:{{ t.hpx }};overflow:hidden;border-radius:4px;cursor:pointer;box-shadow:0 6px 16px -10px rgba(0,0,0,.5);outline:1px solid rgba(0,0,0,.06)" onMouseEnter="{{ t.enter }}" onMouseLeave="{{ t.leave }}">
+              <div style="position:absolute;inset:0;opacity:{{ t.studsOp }};transition:opacity .45s ease">
+                <div style="display:grid;gap:0;grid-template-columns:{{ t.board.gtc }};grid-auto-rows:{{ t.board.cell }};width:{{ t.wpx }};height:{{ t.hpx }}">
+                  <sc-for list="{{ t.board.studs }}" as="s" hint-placeholder-count="140">
+                    <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="position:absolute;inset:0;opacity:{{ t.revealOp }};transition:opacity .45s ease;background:#10161b;overflow:hidden;display:flex;align-items:center;justify-content:center">
+                <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,{{ t.tintB }} 0,{{ t.tintB }} 7px,#10161b 7px,#10161b 15px);opacity:.5"></div>
+                <div style="position:relative;text-align:center;padding:0 12px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;color:{{ t.tintA }};margin-bottom:5px">{{ t.kind }}</div>
+                  <div style="font-family:'Space Grotesk';font-weight:600;font-size:14px;color:#fff;line-height:1.15">{{ t.title }}</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:12px;font-weight:600;font-size:14px;color:#16212B">{{ t.title }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8A8F8B;margin-top:2px">{{ t.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FRAME C — DARK PROJECTS-FORWARD ============ -->
+<div style="position:absolute;left:2800px;top:150px;width:1280px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:rgba(40,44,48,.6)">C · PROJECTS-FORWARD — dark, brick grid is the hero</div>
+  <div style="background:#0f151a;border-radius:3px;box-shadow:0 2px 16px rgba(0,0,0,.18);height:800px;overflow:hidden;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:26px 44px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="width:22px;height:22px;border-radius:50%;background-color:#C91A09;background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+        <span style="font-weight:600;font-size:16px;color:#fff;letter-spacing:-.01em">Eugene Lee</span>
+      </div>
+      <div style="display:flex;gap:30px;font-family:'IBM Plex Mono',monospace;font-size:13px">
+        <span style="font-weight:500;color:#fff;border-bottom:2px solid #C91A09;padding-bottom:4px">Projects</span>
+        <span style="color:rgba(255,255,255,.45)">About</span>
+        <span style="color:rgba(255,255,255,.45)">Contact</span>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;padding:48px 44px">
+      <div style="width:32%;padding-right:30px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.13em;color:#6f7782;margin-bottom:22px">SE @ WATERLOO</div>
+        <h1 style="margin:0;font-size:50px;line-height:1.0;font-weight:700;letter-spacing:-.03em;color:#fff">Eugene<br>Lee</h1>
+        <p style="margin:24px 0 0;font-size:15.5px;line-height:1.55;color:#9aa1a8;max-width:26ch">Algorithms, ML, and transformers — built one piece at a time.</p>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;color:#C91A09;margin-top:30px">SELECTED WORK ▸</div>
+      </div>
+      <div style="width:68%;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-content:center">
+        <sc-for list="{{ cTiles }}" as="t" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column">
+            <div style="position:relative;width:{{ t.wpx }};height:{{ t.hpx }};overflow:hidden;border-radius:5px;cursor:pointer;box-shadow:0 10px 24px -12px rgba(0,0,0,.7);outline:1px solid rgba(255,255,255,.07)" onMouseEnter="{{ t.enter }}" onMouseLeave="{{ t.leave }}">
+              <div style="position:absolute;inset:0;opacity:{{ t.studsOp }};transition:opacity .45s ease">
+                <div style="display:grid;gap:0;grid-template-columns:{{ t.board.gtc }};grid-auto-rows:{{ t.board.cell }};width:{{ t.wpx }};height:{{ t.hpx }}">
+                  <sc-for list="{{ t.board.studs }}" as="s" hint-placeholder-count="170">
+                    <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="position:absolute;inset:0;opacity:{{ t.revealOp }};transition:opacity .45s ease;background:#10161b;overflow:hidden;display:flex;align-items:center;justify-content:center">
+                <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,{{ t.tintB }} 0,{{ t.tintB }} 8px,#10161b 8px,#10161b 17px);opacity:.5"></div>
+                <div style="position:relative;text-align:center;padding:0 14px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:{{ t.tintA }};margin-bottom:7px">{{ t.kind }}</div>
+                  <div style="font-family:'Space Grotesk';font-weight:600;font-size:17px;color:#fff;line-height:1.15">{{ t.title }}</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#aeb4b0;margin-top:8px">▸ open</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:12px;font-weight:600;font-size:15px;color:#eef0f2">{{ t.title }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#727a83;margin-top:2px">{{ t.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROJECTS DETAIL ROW ============ -->
+<div style="position:absolute;left:80px;top:1090px;width:1280px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:rgba(40,44,48,.6)">PROJECTS — brick cover ⇄ real shot on hover (one pre-revealed)</div>
+  <div style="background:#fff;border-radius:3px;box-shadow:0 2px 16px rgba(0,0,0,.10);min-height:540px;padding:40px 44px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:30px">
+      <h2 style="margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em;color:#16212B">Projects</h2>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8F8B">hover a cover →</span>
+    </div>
+    <div style="display:flex;gap:32px">
+      <sc-for list="{{ projTiles }}" as="t" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;width:{{ t.wpx }}">
+          <div style="position:relative;width:{{ t.wpx }};height:{{ t.hpx }};overflow:hidden;border-radius:5px;cursor:pointer;box-shadow:0 8px 20px -12px rgba(0,0,0,.5);outline:1px solid rgba(0,0,0,.06)" onMouseEnter="{{ t.enter }}" onMouseLeave="{{ t.leave }}">
+            <div style="position:absolute;inset:0;opacity:{{ t.studsOp }};transition:opacity .45s ease">
+              <div style="display:grid;gap:0;grid-template-columns:{{ t.board.gtc }};grid-auto-rows:{{ t.board.cell }};width:{{ t.wpx }};height:{{ t.hpx }}">
+                <sc-for list="{{ t.board.studs }}" as="s" hint-placeholder-count="170">
+                  <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="position:absolute;inset:0;opacity:{{ t.revealOp }};transition:opacity .45s ease;background:#10161b;overflow:hidden;display:flex;align-items:center;justify-content:center">
+              <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,{{ t.tintB }} 0,{{ t.tintB }} 8px,#10161b 8px,#10161b 17px);opacity:.5"></div>
+              <div style="position:relative;text-align:center;padding:0 14px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;color:{{ t.tintA }};margin-bottom:7px">{{ t.kind }}</div>
+                <div style="font-family:'Space Grotesk';font-weight:600;font-size:17px;color:#fff;line-height:1.15">{{ t.title }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#aeb4b0;margin-top:8px">▸ open</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;font-weight:600;font-size:16px;color:#16212B">{{ t.title }}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A8F8B;margin-top:3px">{{ t.sub }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STUD SPEC PANEL ============ -->
+<div style="position:absolute;left:1440px;top:1090px;width:620px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:rgba(40,44,48,.6)">SPEC — the 1×1 stud + real LEGO colors</div>
+  <div style="background:#fff;border-radius:3px;box-shadow:0 2px 16px rgba(0,0,0,.10);min-height:540px;padding:38px 40px">
+    <h2 style="margin:0 0 26px;font-size:24px;font-weight:700;letter-spacing:-.02em;color:#16212B">The 1×1 stud</h2>
+    <div style="display:flex;gap:30px;align-items:center;margin-bottom:34px">
+      <div style="width:130px;height:130px;border-radius:8px;flex:none;background-color:#C91A09;background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%);box-shadow:0 10px 22px -12px rgba(0,0,0,.4)"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:2.1;color:#4A4E4A">
+        <div>· top-down view, one plate cell</div>
+        <div>· top-left specular highlight</div>
+        <div>· ring shadow at the stud base</div>
+        <div>· base color = swappable data</div>
+      </div>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;color:#919792;margin-bottom:16px">PALETTE — REAL COLORS ONLY</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 22px">
+      <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="10">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:26px;height:26px;border-radius:50%;flex:none;background-color:{{ sw.c }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%);outline:1px solid rgba(0,0,0,.08)"></div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4E4A">{{ sw.n }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POST-ITS ============ -->
+<div style="position:absolute;left:2180px;top:1100px;width:280px;background:#fef4a8;padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;color:#5b541f;box-shadow:0 2px 8px rgba(0,0,0,.12);transform:rotate(-1.4deg)">Every cover is no-scroll — name, short bio, and the tabs all sit above the fold.</div>
+<div style="position:absolute;left:2180px;top:1250px;width:280px;background:#bfe3ff;padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;color:#1c4a6b;box-shadow:0 2px 8px rgba(0,0,0,.12);transform:rotate(1.2deg)">Brick covers crossfade to the real screenshot / live demo on hover. (One is pre-revealed.)</div>
+<div style="position:absolute;left:2180px;top:1400px;width:280px;background:#ffd2c2;padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;color:#7a3320;box-shadow:0 2px 8px rgba(0,0,0,.12);transform:rotate(-0.8deg)">Real LEGO colors only — and each stud is just data, so swap any color later.</div>
+
+<!-- ============ FRAME D — RENDERED BRICK GIF ============ -->
+<div style="position:absolute;left:80px;top:1770px;width:1280px">
+  <div data-drags-parent="1" style="position:absolute;top:-26px;left:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.04em;color:rgba(40,44,48,.6)">D · RENDERED BRICK GIF — full-bleed animated studs + a white-stud plate for the text</div>
+  <div style="position:relative;width:1280px;height:800px;border-radius:3px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.12)">
+    <div id="brickgif-grid" ref="{{ bg.gridRef }}" style="position:absolute;inset:0;display:grid;gap:0;grid-template-columns:{{ bg.gtc }};grid-auto-rows:{{ bg.cell }};width:{{ bg.wpx }};height:{{ bg.hpx }}">
+      <sc-for list="{{ bg.studs }}" as="s" hint-placeholder-count="600">
+        <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+      </sc-for>
+    </div>
+    <div style="position:absolute;top:30px;left:44px;right:44px;display:flex;align-items:center;justify-content:space-between;z-index:2">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div style="width:22px;height:22px;border-radius:50%;background-color:#F4F5F2;background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%);box-shadow:0 1px 5px rgba(0,0,0,.45)"></div>
+        <span style="font-weight:600;font-size:16px;color:#fff;text-shadow:0 1px 7px rgba(0,0,0,.6)">Eugene Lee</span>
+      </div>
+      <div style="display:flex;gap:30px;font-family:'IBM Plex Mono',monospace;font-size:13px;text-shadow:0 1px 7px rgba(0,0,0,.6)">
+        <span style="font-weight:500;color:#fff;border-bottom:2px solid #fff;padding-bottom:4px">Projects</span>
+        <span style="color:rgba(255,255,255,.82)">About</span>
+        <span style="color:rgba(255,255,255,.82)">Contact</span>
+      </div>
+    </div>
+    <div style="position:absolute;left:64px;top:372px;width:672px;height:416px;background:#fff;border-radius:4px;box-shadow:0 12px 34px -14px rgba(0,0,0,.5);z-index:1"></div>
+    <div style="position:absolute;left:104px;top:410px;width:600px;z-index:2">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.13em;color:#7A7E7A;margin-bottom:16px">SOFTWARE ENGINEERING · UNIVERSITY OF WATERLOO</div>
+      <h1 style="margin:0;font-size:60px;line-height:.97;font-weight:700;letter-spacing:-.03em;color:#16212B">Eugene Lee</h1>
+      <p style="margin:20px 0 0;font-size:16.5px;line-height:1.5;color:#42463F;max-width:30ch">I build with algorithms, ML, and transformers — assembled one small piece at a time.</p>
+      <div style="display:flex;gap:9px;margin-top:24px">
+        <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="3">
+          <span style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#16212B;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);padding:7px 13px;border-radius:22px">
+            <i style="width:11px;height:11px;border-radius:50%;background-color:{{ ch.c }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%)"></i>{{ ch.t }}
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute;left:1440px;top:1770px;width:300px;background:#d8f3d0;padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;color:#28502a;box-shadow:0 2px 8px rgba(0,0,0,.12);transform:rotate(1deg)">D's background is live-rendered (flowing brick animation) — a stand-in for your brickified GIF. Drop in real frames later; the white-stud plate stays put under the text.</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;density&quot;: { &quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 40, &quot;tsType&quot;: &quot;number&quot;, &quot;min&quot;: 24, &quot;max&quot;: 80, &quot;step&quot;: 4 }
+}">
+class Component extends DCLogic {
+  state = { hovered: 'proj-graph' };
+  t = 0;
+  gridRef = React.createRef();
+
+  flowColor(x, y, t, W, H) {
+    const fx = x / Math.max(1, W - 1), fy = y / Math.max(1, H - 1);
+    const v = Math.sin(fx * 13 + t) + Math.sin(fy * 10 + t * 0.85)
+      + Math.sin((fx + fy) * 7.5 + t * 1.25) + Math.sin(Math.hypot(fx - 0.55, fy - 0.4) * 12 - t * 1.1);
+    const n = Math.max(0, Math.min(0.999, (v + 4) / 8));
+    const ramp = ['#0B5FA5', '#1E9DD5', '#3A8C3F', '#A6C520', '#F2CD37', '#FE8A18', '#C91A09'];
+    return ramp[Math.floor(n * ramp.length)];
+  }
+  componentDidMount() { this.startBg(0); }
+  startBg(tries) {
+    const el = document.getElementById('brickgif-grid');
+    if (!el || el.children.length === 0) {
+      if (tries < 40) setTimeout(() => this.startBg(tries + 1), 80);
+      return;
+    }
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      this.t += 0.09;
+      const grid = document.getElementById('brickgif-grid');
+      if (!grid) return;
+      const W = this.curW, H = this.curH, kids = grid.children;
+      for (let i = 0; i < kids.length; i++) {
+        kids[i].style.backgroundColor = this.flowColor(i % W, Math.floor(i / W), this.t, W, H);
+      }
+    }, 70);
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+
+  palette() {
+    return {
+      base: '#9DA3A0', baseLt: '#C7CCC7',
+      red: '#C91A09', blue: '#0B5FA5', azure: '#1E9DD5', yellow: '#F2CD37',
+      orange: '#FE8A18', green: '#3A8C3F', lime: '#A6C520', white: '#F4F5F2',
+      black: '#16212B', dgray: '#5B5E5A'
+    };
+  }
+
+  makeBoard(w, h, cell, fn) {
+    const studs = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) studs.push({ color: fn(x, y, w, h) });
+    return { studs, gtc: `repeat(${w}, ${cell}px)`, cell: `${cell}px`, wpx: `${w * cell}px`, hpx: `${h * cell}px` };
+  }
+  makeArrBoard(w, h, cell, arr) {
+    return { studs: arr.map(c => ({ color: c })), gtc: `repeat(${w}, ${cell}px)`, cell: `${cell}px`, wpx: `${w * cell}px`, hpx: `${h * cell}px` };
+  }
+
+  graphArr(w, h) {
+    const C = this.palette();
+    const g = new Array(w * h).fill(C.base);
+    const set = (x, y, c) => { if (x >= 0 && x < w && y >= 0 && y < h) g[y * w + x] = c; };
+    const line = (x0, y0, x1, y1, c) => {
+      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+      for (let i = 0; i <= n; i++) set(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), c);
+    };
+    const nodes = [[2, 2], [8, 1], [13, 3], [5, 6], [11, 7], [3, 9], [9, 10]];
+    const E = [[0, 1], [1, 2], [0, 3], [3, 4], [1, 4], [4, 6], [3, 5], [5, 6], [2, 4]];
+    E.forEach(([a, b]) => line(nodes[a][0], nodes[a][1], nodes[b][0], nodes[b][1], C.dgray));
+    [[0, 3], [3, 4], [4, 6]].forEach(([a, b]) => line(nodes[a][0], nodes[a][1], nodes[b][0], nodes[b][1], C.red));
+    nodes.forEach(([x, y], i) => {
+      let c = C.blue;
+      if (i === 0) c = C.green;
+      if (i === 6) c = C.orange;
+      set(x, y, c); set(x + 1, y, c); set(x, y + 1, c);
+    });
+    return g;
+  }
+
+  monoArr(w, h) {
+    const C = this.palette();
+    const g = new Array(w * h).fill(C.base);
+    const set = (x, y, c) => { if (x >= 0 && x < w && y >= 0 && y < h) g[y * w + x] = c; };
+    const stamp = (ox, oy, rows, c) => rows.forEach((r, yy) => r.split('').forEach((ch, xx) => { if (ch === '1') set(ox + xx, oy + yy, c); }));
+    const E = ['11111', '10000', '10000', '11110', '10000', '10000', '11111'];
+    const L = ['10000', '10000', '10000', '10000', '10000', '10000', '11111'];
+    stamp(2, 5, E, C.red);
+    stamp(8, 5, L, C.blue);
+    [[1, 1, C.yellow], [12, 2, C.green], [0, 14, C.orange], [12, 16, C.azure], [6, 17, C.yellow], [2, 16, C.lime], [13, 13, C.red]].forEach(([x, y, c]) => set(x, y, c));
+    return g;
+  }
+
+  tile(id, board, title, sub, kind, tintA, tintB) {
+    const hov = this.state.hovered === id;
+    return {
+      id, board, title, sub, kind, tintA, tintB,
+      wpx: board.wpx, hpx: board.hpx,
+      studsOp: hov ? 0 : 1, revealOp: hov ? 1 : 0,
+      enter: () => this.setState({ hovered: id }),
+      leave: () => this.setState(s => (s.hovered === id ? { hovered: null } : null))
+    };
+  }
+
+  renderVals() {
+    const C = this.palette();
+    const heat = (x, y, w, h) => {
+      const ramp = ['#0B5FA5', '#1E9DD5', '#F2CD37', '#FE8A18', '#C91A09'];
+      const cx = w * 0.62, cy = h * 0.34;
+      const d = Math.hypot((x - cx) / (w * 0.92), (y - cy) / (h * 0.92));
+      let t = 1 - d * 1.55 + 0.1 * Math.sin(x * 0.7 + y * 0.6);
+      t = Math.max(0, Math.min(0.999, t));
+      return ramp[Math.floor(t * ramp.length)];
+    };
+    const layers = (x, y, w, h) => {
+      const cols = ['#0B5FA5', '#1E9DD5', '#3A8C3F', '#A6C520', '#F2CD37', '#FE8A18'];
+      const band = Math.floor(y / 2);
+      if ((x + band) % 6 === 0) return '#F4F5F2';
+      return cols[band % cols.length];
+    };
+    const bars = (x, y, w, h) => {
+      const v = 2 + Math.round((Math.sin(x * 1.25) * 0.5 + 0.5) * (h - 2));
+      if (y >= h - v) { const ramp = ['#0B5FA5', '#1E9DD5', '#3A8C3F', '#A6C520']; return ramp[Math.min(3, Math.floor((h - y) / 3))]; }
+      return C.baseLt;
+    };
+    const plate = (x, y) => {
+      const acc = { '3,2': C.yellow, '7,5': C.red, '12,1': C.white, '19,8': C.orange, '27,3': C.green, '35,9': C.azure, '40,2': C.yellow, '16,10': C.white, '23,5': C.lime, '31,7': C.white, '9,9': C.orange, '37,4': C.red };
+      return acc[x + ',' + y] || C.blue;
+    };
+
+    const projDefs = [
+      ['heat', heat, 'Attention Atlas', 'transformer attention explorer', 'LIVE DEMO', '#FE8A18', '#7a3c06'],
+      ['graph', this.graphArr.bind(this), 'Graph Pathfinder', 'A* / Dijkstra visualizer', 'LIVE DEMO', '#1E9DD5', '#0a4566'],
+      ['layers', layers, 'TokenStream', 'tiny LLM inference engine', 'PROJECT', '#3A8C3F', '#16361a'],
+      ['bars', bars, 'SortLab', 'sorting algorithm playground', 'PROJECT', '#0B5FA5', '#062f54']
+    ];
+    const board = (kind, gen, w, h, cell) => kind === 'graph' ? this.makeArrBoard(w, h, cell, gen(w, h)) : this.makeBoard(w, h, cell, gen);
+
+    const projTiles = projDefs.map(([k, gen, title, sub, kind, a, b]) =>
+      this.tile('proj-' + k, board(k, gen, 16, 11, 18), title, sub, kind, a, b));
+    const cTiles = projDefs.map(([k, gen, title, sub, kind, a, b]) =>
+      this.tile('c-' + k, board(k, gen, 16, 11, 19), title, sub, kind, a, b));
+    const bThumbs = projDefs.slice(0, 3).map(([k, gen, title, sub, kind, a, b]) =>
+      this.tile('b-' + k, board(k, gen, 14, 10, 16), title, sub, kind, a, b));
+
+    const density = Math.round(this.props.density ?? 40);
+    const bgW = density;
+    const cell = 1280 / bgW;
+    const bgH = Math.ceil(800 / cell);
+    this.curW = bgW; this.curH = bgH;
+    if (!this.timer) { clearTimeout(this._kick); this._kick = setTimeout(() => this.startBg(0), 60); }
+    const bgStuds = [];
+    for (let y = 0; y < bgH; y++) for (let x = 0; x < bgW; x++) bgStuds.push({ color: this.flowColor(x, y, this.t, bgW, bgH) });
+    const bg = { studs: bgStuds, gtc: `repeat(${bgW}, ${cell}px)`, cell: `${cell}px`, wpx: '1280px', hpx: `${bgH * cell}px`, gridRef: this.gridRef };
+
+    return {
+      bg,
+      headStuds: [C.red, C.yellow, C.blue, C.green],
+      chips: [{ c: C.red, t: 'Algorithms' }, { c: C.blue, t: 'Machine Learning' }, { c: C.yellow, t: 'Transformers' }],
+      mono: this.makeArrBoard(14, 19, 24, this.monoArr(14, 19)),
+      plate: this.makeBoard(43, 12, 30, plate),
+      projTiles, cTiles, bThumbs,
+      swatches: [
+        { n: 'Bright Red', c: C.red }, { n: 'Bright Blue', c: C.blue },
+        { n: 'Medium Azure', c: C.azure }, { n: 'Bright Yellow', c: C.yellow },
+        { n: 'Orange', c: C.orange }, { n: 'Green', c: C.green },
+        { n: 'Lime', c: C.lime }, { n: 'White', c: C.white },
+        { n: 'Lt Bluish Gray', c: C.base }, { n: 'Black', c: C.black }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

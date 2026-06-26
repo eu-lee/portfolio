@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: 'Space Grotesk', system-ui, sans-serif; }
+</style>
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#1E9DD5"/>
+    <circle cx="38" cy="40" r="9" fill="#C91A09"/><circle cx="62" cy="40" r="9" fill="#F2CD37"/>
+    <circle cx="38" cy="62" r="9" fill="#3A8C3F"/><circle cx="62" cy="62" r="9" fill="#FE8A18"/>
+  </svg>
+</template>
+</helmet>
+
+<div id="cover" style="position:relative;width:100vw;height:100vh;overflow:hidden;background:#1E9DD5">
+  <div id="brickgif-grid" style="position:absolute;inset:0;display:grid;gap:0;grid-template-columns:{{ bg.gtc }};grid-auto-rows:{{ bg.cell }}">
+    <sc-for list="{{ bg.studs }}" as="s" hint-placeholder-count="800">
+      <div style="background-color:{{ s.color }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%)"></div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute;top:34px;left:5vw;right:5vw;display:flex;align-items:center;justify-content:space-between;z-index:3">
+    <div style="display:flex;align-items:center;gap:11px">
+      <div style="width:22px;height:22px;border-radius:50%;background-color:#F4F5F2;background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%),radial-gradient(circle at 63% 67%,rgba(0,0,0,0.16) 0%,rgba(0,0,0,0) 26%);box-shadow:0 1px 5px rgba(0,0,0,.45)"></div>
+      <span style="font-weight:600;font-size:16px;color:#fff;text-shadow:0 1px 7px rgba(0,0,0,.6)">Eugene Lee</span>
+    </div>
+    <div style="display:flex;gap:30px;font-family:'IBM Plex Mono',monospace;font-size:13px;text-shadow:0 1px 7px rgba(0,0,0,.6)">
+      <span style="font-weight:500;color:#fff;border-bottom:2px solid #fff;padding-bottom:4px">Projects</span>
+      <span style="color:rgba(255,255,255,.82)">About</span>
+      <span style="color:rgba(255,255,255,.82)">Contact</span>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:5vw;bottom:8vh;width:min(680px,52vw);background:#fff;border-radius:4px;box-shadow:0 16px 40px -16px rgba(0,0,0,.55);padding:44px 48px;z-index:2">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.13em;color:#7A7E7A;margin-bottom:16px">SOFTWARE ENGINEERING · UNIVERSITY OF WATERLOO</div>
+    <h1 style="margin:0;font-size:clamp(40px,5.2vw,64px);line-height:.97;font-weight:700;letter-spacing:-.03em;color:#16212B">Eugene Lee</h1>
+    <p style="margin:20px 0 0;font-size:16.5px;line-height:1.5;color:#42463F;max-width:32ch">I build with algorithms, ML, and transformers — assembled one small piece at a time.</p>
+    <div style="display:flex;gap:9px;margin-top:24px;flex-wrap:wrap">
+      <sc-for list="{{ chips }}" as="ch" hint-placeholder-count="3">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#16212B;background:#F4F5F2;border:1px solid #E5E7E3;padding:7px 13px;border-radius:22px">
+          <i style="width:11px;height:11px;border-radius:50%;background-color:{{ ch.c }};background-image:radial-gradient(circle at 40% 37%,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0) 34%),radial-gradient(circle at 50% 55%,rgba(0,0,0,0) 33%,rgba(0,0,0,0.22) 41%,rgba(0,0,0,0) 52%)"></i>{{ ch.t }}
+        </span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;density&quot;: { &quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 40, &quot;tsType&quot;: &quot;number&quot;, &quot;min&quot;: 24, &quot;max&quot;: 90, &quot;step&quot;: 4 }
+}">
+class Component extends DCLogic {
+  state = { vw: 1280, vh: 800 };
+  t = 0;
+
+  flowColor(x, y, t, W, H) {
+    const fx = x / Math.max(1, W - 1), fy = y / Math.max(1, H - 1);
+    const v = Math.sin(fx * 13 + t) + Math.sin(fy * 10 + t * 0.85)
+      + Math.sin((fx + fy) * 7.5 + t * 1.25) + Math.sin(Math.hypot(fx - 0.55, fy - 0.4) * 12 - t * 1.1);
+    const n = Math.max(0, Math.min(0.999, (v + 4) / 8));
+    const ramp = ['#0B5FA5', '#1E9DD5', '#3A8C3F', '#A6C520', '#F2CD37', '#FE8A18', '#C91A09'];
+    return ramp[Math.floor(n * ramp.length)];
+  }
+
+  componentDidMount() {
+    this.measure = () => {
+      const el = document.getElementById('cover');
+      if (el) this.setState({ vw: el.clientWidth, vh: el.clientHeight });
+    };
+    this.measure();
+    window.addEventListener('resize', this.measure);
+    this.startBg(0);
+  }
+  componentWillUnmount() {
+    if (this.timer) clearInterval(this.timer);
+    window.removeEventListener('resize', this.measure);
+  }
+  startBg(tries) {
+    const el = document.getElementById('brickgif-grid');
+    if (!el || el.children.length === 0) {
+      if (tries < 50) setTimeout(() => this.startBg(tries + 1), 80);
+      return;
+    }
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      this.t += 0.09;
+      const grid = document.getElementById('brickgif-grid');
+      if (!grid) return;
+      const W = this.curW, H = this.curH, kids = grid.children;
+      for (let i = 0; i < kids.length; i++) {
+        kids[i].style.backgroundColor = this.flowColor(i % W, Math.floor(i / W), this.t, W, H);
+      }
+    }, 70);
+  }
+
+  renderVals() {
+    const density = Math.round(this.props.density ?? 40);
+    const vw = this.state.vw, vh = this.state.vh;
+    const W = density;
+    const cell = vw / W;
+    const H = Math.ceil(vh / cell) + 1;
+    this.curW = W; this.curH = H;
+    const studs = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) studs.push({ color: this.flowColor(x, y, this.t, W, H) });
+    return {
+      bg: { studs, gtc: `repeat(${W}, ${cell}px)`, cell: `${cell}px` },
+      chips: [{ c: '#C91A09', t: 'Algorithms' }, { c: '#0B5FA5', t: 'Machine Learning' }, { c: '#F2CD37', t: 'Transformers' }]
+    };
+  }
+}
+</script>
+</body>
+</html>
