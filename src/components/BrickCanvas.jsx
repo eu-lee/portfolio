@@ -65,15 +65,15 @@ function drawStud(ctx, x, y, size, color) {
   // --- Cast shadow on the plate: a tight contact shadow tucked under the
   //     stud's lower-right. Kept small so it fades before the corner/seam and
   //     doesn't pool into a dark spot where bricks meet. ---
-  const shx = cx; // centered under the stud so it reads horizontally centered
-  const shy = cy + wallH + size * 0.045;
-  const shadow = ctx.createRadialGradient(shx, shy, topR * 0.15, shx, shy, topR * 1.05);
-  shadow.addColorStop(0, "rgba(0,0,0,0.44)");
-  shadow.addColorStop(0.65, "rgba(0,0,0,0.16)");
+  const shx = cx + size * 0.05; // nudged toward the bottom-right, with the light
+  const shy = cy + wallH + size * 0.065;
+  const shadow = ctx.createRadialGradient(shx, shy, topR * 0.15, shx, shy, topR * 1.12);
+  shadow.addColorStop(0, "rgba(0,0,0,0.52)");
+  shadow.addColorStop(0.65, "rgba(0,0,0,0.2)");
   shadow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = shadow;
   ctx.beginPath();
-  ctx.ellipse(shx, shy, topR * 1.05, topR * 0.78, 0, 0, Math.PI * 2);
+  ctx.ellipse(shx, shy, topR * 1.12, topR * 0.82, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // --- Cylinder wall: a body circle dropped below the top face shows as a
@@ -99,7 +99,7 @@ function drawStud(ctx, x, y, size, color) {
   const topFace = ctx.createLinearGradient(cx - topR, cy - topR, cx + topR, cy + topR);
   topFace.addColorStop(0, "rgba(255,255,255,0.16)");
   topFace.addColorStop(0.5, "rgba(255,255,255,0)");
-  topFace.addColorStop(1, "rgba(0,0,0,0.24)");
+  topFace.addColorStop(1, "rgba(0,0,0,0.3)");
   ctx.fillStyle = topFace;
   ctx.beginPath();
   ctx.arc(cx, cy, topR, 0, Math.PI * 2);
