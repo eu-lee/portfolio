@@ -1,0 +1,10 @@
+# Project cover images go here.
+#
+# Drop an image in this folder, then import it in src/data/projects.js and set
+# it as that project's `cover`:
+#
+#   import tokenstreamCover from "../assets/projects/tokenstream.png";
+#   { ..., cover: tokenstreamCover }
+#
+# Imported images are bundled and content-hashed by Vite, so a missing or
+# misspelled path fails the build instead of 404-ing at runtime.

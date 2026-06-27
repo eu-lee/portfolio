@@ -93,12 +93,27 @@ function ProjectDialog({ project, onClose }) {
           ×
         </button>
         <div className="dialog-hero" style={{ "--accent": `var(--${project.accent})` }}>
-          <BrickGrid type={project.board} width={24} height={9} />
+          {project.cover ? (
+            <img className="cover-image" src={project.cover} alt={`${project.title} cover`} />
+          ) : (
+            <BrickGrid type={project.board} width={24} height={9} />
+          )}
         </div>
         <div className="dialog-content">
           <p className="eyebrow">{project.kind}</p>
           <h2 id="project-dialog-title">{project.title}</h2>
-          <p>{project.summary}</p>
+          {(project.description ?? [project.summary]).map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+          {project.links?.length > 0 && (
+            <div className="dialog-links">
+              {project.links.map((link) => (
+                <a key={`${link.label}-${link.href}`} href={link.href} target="_blank" rel="noreferrer">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          )}
           <div className="meta-list">
             {project.stack.map((item) => (
               <span key={item}>{item}</span>

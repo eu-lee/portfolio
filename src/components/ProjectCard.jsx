@@ -9,7 +9,11 @@ export function ProjectCard({ project, onOpen }) {
         type="button"
         onClick={() => onOpen(project)}
       >
-        <BrickGrid type={project.board} />
+        {project.cover ? (
+          <img className="cover-image" src={project.cover} alt="" />
+        ) : (
+          <BrickGrid type={project.board} />
+        )}
         <span className="project-reveal">
           <span>
             <span className="project-kind">{project.kind}</span>
