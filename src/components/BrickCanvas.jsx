@@ -185,6 +185,13 @@ export function BrickCanvas({ src, grid }) {
       canvas.height = height * dpr;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Each stud is a sprite already rasterized at the exact device-pixel size, so
+    // it never needs resampling. When the stud size is fractional (e.g. a wide
+    // screen that hits the column cap => size = width/112 isn't a whole number),
+    // sprites land on sub-pixel positions and the default bilinear smoothing
+    // softens every blit, blurring the whole wall. Nearest-neighbour keeps it
+    // crisp at any stud size / DPR.
+    ctx.imageSmoothingEnabled = false;
 
     function getSprite(hex) {
       const cached = spriteRef.current.cache.get(hex);
