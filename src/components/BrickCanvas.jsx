@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { LEGO_COLORS, hexToRgb, mixColor } from "../data/legoColors.js";
+import { mixColor } from "../data/legoColors.js";
 
 // Deterministic, position-locked surface variation so the field reads as real
 // plastic rather than flat CGI. Independent of the source image => fine grain.
@@ -8,29 +8,16 @@ function surfaceJitter(x, y) {
   return h - Math.floor(h) - 0.5; // [-0.5, 0.5]
 }
 
-// Real LEGO colors, precomputed to RGB once. Snapping each sampled pixel to the
-// nearest of these is what keeps the studs looking like molded plastic: the
-// palette is saturated and well-spaced, so drawStud's light/shadow grades read
-// clearly — whereas raw photo tints are muddy and collapse the shading to flat.
-const PALETTE = Object.values(LEGO_COLORS).map((color) => ({
-  color,
-  rgb: hexToRgb(color.value)
-}));
-
-function nearestLegoColor(r, g, b) {
-  let best = PALETTE[0];
-  let bestDistance = Infinity;
-  for (const entry of PALETTE) {
-    const dr = r - entry.rgb.r;
-    const dg = g - entry.rgb.g;
-    const db = b - entry.rgb.b;
-    const distance = dr * dr + dg * dg + db * db;
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = entry;
-    }
-  }
-  return best.color;
+// Each stud is tinted with the actual color sampled from the source image, so
+// the wall reproduces the photo's full range rather than a fixed palette. The
+// tint is quantized to 8 steps per channel only to bound the sprite cache: a
+// downsampled image resolves to a few hundred distinct tints, indistinguishable
+// from the exact sample but cheap to cache and redraw.
+const quantizeChannel = (n) => n & 0xf8;
+function quantizeHex(r, g, b) {
+  const packed =
+    (1 << 24) + (quantizeChannel(r) << 16) + (quantizeChannel(g) << 8) + quantizeChannel(b);
+  return `#${packed.toString(16).slice(1)}`;
 }
 
 // Single light direction: top-left. Highlights live upper-left, shadows fall
@@ -170,8 +157,8 @@ export function BrickCanvas({ src }) {
     let spriteCache = new Map();
     let cacheKey = "";
 
-    function getSprite(color, size, dpr) {
-      const cached = spriteCache.get(color.name);
+    function getSprite(hex, size, dpr) {
+      const cached = spriteCache.get(hex);
       if (cached) return cached;
       const off = document.createElement("canvas");
       const px = Math.max(1, Math.ceil(size * dpr));
@@ -179,8 +166,8 @@ export function BrickCanvas({ src }) {
       off.height = px;
       const octx = off.getContext("2d");
       octx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawStud(octx, 0, 0, size, color);
-      spriteCache.set(color.name, off);
+      drawStud(octx, 0, 0, size, { value: hex, alpha: 1 });
+      spriteCache.set(hex, off);
       return off;
     }
 
@@ -227,10 +214,10 @@ export function BrickCanvas({ src }) {
       for (let y = 0; y < rows; y += 1) {
         for (let x = 0; x < columns; x += 1) {
           const i = (y * columns + x) * 4;
-          const color = nearestLegoColor(pixels[i], pixels[i + 1], pixels[i + 2]);
+          const hex = quantizeHex(pixels[i], pixels[i + 1], pixels[i + 2]);
           const px = x * size;
           const py = y * size;
-          ctx.drawImage(getSprite(color, size, dpr), px, py, size, size);
+          ctx.drawImage(getSprite(hex, size, dpr), px, py, size, size);
 
           const j = surfaceJitter(x, y);
           ctx.globalAlpha = Math.abs(j) * 0.05;
