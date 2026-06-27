@@ -49,7 +49,10 @@ button {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
-  background: var(--azure);
+  /* The wall is fitted to a whole number of studs and centred, so a thin ring of
+     the hero shows around it as a border. Keep that ring a deliberate dark frame
+     rather than the azure that used to bleed through the seams. */
+  background: var(--dark);
   /* Lock native pinch-zoom and pan gestures that start on the hero. */
   touch-action: none;
   overscroll-behavior: none;
@@ -57,9 +60,34 @@ button {
 
 .brick-canvas {
   position: absolute;
+  /* left/top/width/height are set inline from the shared grid (centred fit). */
+}
+
+/* White wires that run the full width/height of the hero and meet at the four
+   corners of the brick wall, splitting the screen into a 3x3 grid with the wall
+   in the centre cell. Positioned inline from the shared grid; non-interactive so
+   they never swallow clicks meant for the nameplate. */
+.hero-frame {
+  position: absolute;
   inset: 0;
-  width: 100%;
+  pointer-events: none;
+}
+
+.frame-line {
+  position: absolute;
+  background: var(--white);
+}
+
+.frame-line.is-vertical {
+  top: 0;
   height: 100%;
+  width: 1px;
+}
+
+.frame-line.is-horizontal {
+  left: 0;
+  width: 100%;
+  height: 1px;
 }
 
 /* Tiled LEGO nameplate: a grid of flat tiles paved edge-to-edge. Seams are

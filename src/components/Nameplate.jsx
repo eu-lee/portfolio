@@ -125,12 +125,14 @@ export function Nameplate({ grid, onNavigate }) {
   // sits on the identical cells the canvas drew.
   const box = useMemo(() => {
     if (!grid) return null;
-    const { columns, rows, size } = grid;
+    const { columns, rows, size, offsetX, offsetY } = grid;
     const col = Math.max(0, Math.min(MARGIN, columns - COLS));
     const row = Math.max(0, rows - ROWS - MARGIN);
+    // Offset by the same border inset the canvas uses, so the plate stays snapped
+    // to the exact studs the wall drew.
     return {
-      left: col * size,
-      top: row * size,
+      left: offsetX + col * size,
+      top: offsetY + row * size,
       width: COLS * size,
       height: ROWS * size
     };

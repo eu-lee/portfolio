@@ -173,36 +173,29 @@ export function BrickCanvas({ src, grid }) {
     const image = imageRef.current;
     if (!grid || !loaded || !image || image.naturalWidth === 0) return;
 
-    const { columns, rows, size, dpr } = grid;
-    const width = Math.ceil(grid.width);
-    const height = Math.ceil(grid.height);
-    if (width === 0 || height === 0) return;
+    const { columns, rows, cell, deviceWidth, deviceHeight } = grid;
+    if (deviceWidth === 0 || deviceHeight === 0) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+    if (canvas.width !== deviceWidth || canvas.height !== deviceHeight) {
+      canvas.width = deviceWidth;
+      canvas.height = deviceHeight;
     }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // Each stud is a sprite already rasterized at the exact device-pixel size, so
-    // it never needs resampling. When the stud size is fractional (e.g. a wide
-    // screen that hits the column cap => size = width/112 isn't a whole number),
-    // sprites land on sub-pixel positions and the default bilinear smoothing
-    // softens every blit, blurring the whole wall. Nearest-neighbour keeps it
-    // crisp at any stud size / DPR.
+    // Draw straight in device pixels: `cell` is a whole number of them and every
+    // stud sits at x*cell / y*cell, so the wall tiles seamlessly (no azure bleed)
+    // and blits 1:1 with no resampling. Smoothing off as belt-and-suspenders.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
 
     function getSprite(hex) {
       const cached = spriteRef.current.cache.get(hex);
       if (cached) return cached;
       const off = document.createElement("canvas");
-      const px = Math.max(1, Math.ceil(size * dpr));
-      off.width = px;
-      off.height = px;
+      off.width = cell;
+      off.height = cell;
       const octx = off.getContext("2d");
-      octx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawStud(octx, 0, 0, size, { value: hex, alpha: 1 });
+      drawStud(octx, 0, 0, cell, { value: hex, alpha: 1 });
       spriteRef.current.cache.set(hex, off);
       return off;
     }
@@ -223,8 +216,8 @@ export function BrickCanvas({ src, grid }) {
     sctx.drawImage(image, (columns - dw) / 2, (rows - dh) / 2, dw, dh);
     const pixels = sctx.getImageData(0, 0, columns, rows).data;
 
-    // Rebuild the sprite cache only when the stud size (or DPR) changes.
-    const key = `${size.toFixed(3)}:${dpr}`;
+    // Rebuild the sprite cache only when the stud pixel size changes.
+    const key = `${cell}`;
     if (key !== spriteRef.current.key) {
       spriteRef.current = { cache: new Map(), key };
     }
@@ -233,18 +226,29 @@ export function BrickCanvas({ src, grid }) {
       for (let x = 0; x < columns; x += 1) {
         const i = (y * columns + x) * 4;
         const hex = quantizeHex(pixels[i], pixels[i + 1], pixels[i + 2]);
-        const px = x * size;
-        const py = y * size;
-        ctx.drawImage(getSprite(hex), px, py, size, size);
+        const px = x * cell;
+        const py = y * cell;
+        ctx.drawImage(getSprite(hex), px, py, cell, cell);
 
         const j = surfaceJitter(x, y);
         ctx.globalAlpha = Math.abs(j) * 0.05;
         ctx.fillStyle = j > 0 ? "#fff" : "#000";
-        ctx.fillRect(px, py, size, size);
+        ctx.fillRect(px, py, cell, cell);
         ctx.globalAlpha = 1;
       }
     }
   }, [grid, loaded]);
 
-  return <canvas className="brick-canvas" ref={canvasRef} aria-hidden="true" />;
+  // Position the fitted wall in CSS px and centre it; the leftover ring is the
+  // border frame. (The canvas backing store is sized in device px above.)
+  const style = grid
+    ? {
+        left: `${grid.offsetX}px`,
+        top: `${grid.offsetY}px`,
+        width: `${grid.width}px`,
+        height: `${grid.height}px`
+      }
+    : { display: "none" };
+
+  return <canvas className="brick-canvas" ref={canvasRef} style={style} aria-hidden="true" />;
 }

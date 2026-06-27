@@ -22,8 +22,26 @@ function Hero() {
   return (
     <section className="hero" ref={heroRef}>
       <BrickCanvas src={heroBackground} grid={grid} />
+      <HeroFrame grid={grid} />
       <Nameplate grid={grid} onNavigate={navigateTo} />
     </section>
+  );
+}
+
+// Full-length white wires that hug the four edges of the (inset, centred) brick
+// wall and extend to the screen edges, dividing the hero into a 3x3 grid. The
+// lines sit just outside the wall in the dark frame so they outline it without
+// painting over the studs.
+function HeroFrame({ grid }) {
+  if (!grid) return null;
+  const { offsetX, offsetY, width, height } = grid;
+  return (
+    <div className="hero-frame" aria-hidden="true">
+      <span className="frame-line is-vertical" style={{ left: `${offsetX - 1}px` }} />
+      <span className="frame-line is-vertical" style={{ left: `${offsetX + width}px` }} />
+      <span className="frame-line is-horizontal" style={{ top: `${offsetY - 1}px` }} />
+      <span className="frame-line is-horizontal" style={{ top: `${offsetY + height}px` }} />
+    </div>
   );
 }
 
