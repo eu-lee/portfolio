@@ -54,15 +54,18 @@ function drawStud(ctx, x, y, size, color) {
   ctx.fill();
 
   // --- Stud geometry ---
-  const cx = x + size / 2;
-  const cy = y + size / 2;
   const topR = size * 0.31; // true LEGO 5mm/8mm => 0.625 diameter
   const wallH = size * 0.07; // visible cylinder wall (slight top-down view)
+  const cx = x + size / 2;
+  // Center the full stud silhouette (top face + the cylinder wall that hangs
+  // below it), not just the top face. Without the -wallH/2 lift the wall pushes
+  // the visible mass low and the stud reads as sitting below the brick center.
+  const cy = y + size / 2 - wallH / 2;
 
   // --- Cast shadow on the plate: a tight contact shadow tucked under the
   //     stud's lower-right. Kept small so it fades before the corner/seam and
   //     doesn't pool into a dark spot where bricks meet. ---
-  const shx = cx + size * 0.04;
+  const shx = cx; // centered under the stud so it reads horizontally centered
   const shy = cy + wallH + size * 0.045;
   const shadow = ctx.createRadialGradient(shx, shy, topR * 0.15, shx, shy, topR * 1.05);
   shadow.addColorStop(0, "rgba(0,0,0,0.44)");
