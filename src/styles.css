@@ -88,28 +88,53 @@ button {
   pointer-events: none;
 }
 
-/* The Projects button, rendered as a 2x4 azure slab tile with the same seam. */
+/* Buttons are just colored plates, flush and at the same level as the base
+   tiles: identical flat seam, only the color (and text/icon) differs. bg + ink
+   come in per button via CSS vars. */
 .tile-button {
   position: relative;
   z-index: 2;
   display: grid;
   place-items: center;
-  background: var(--azure);
+  color: var(--btn-ink);
+  background: var(--btn-bg);
   box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, .45),
-    inset -1px -1px 0 rgba(0, 0, 0, .3);
-  color: #08263c;
+    inset 1px 1px 0 rgba(255, 255, 255, .5),
+    inset -1px -1px 0 rgba(0, 0, 0, .24);
   cursor: pointer;
   font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(10px, 1.4vw, 13px);
-  letter-spacing: .14em;
+  font-size: clamp(8px, 1.15vw, 12px);
+  letter-spacing: .06em;
   text-transform: uppercase;
-  transition: filter .2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow .18s ease;
 }
 
+.tile-button-icon svg {
+  width: 54%;
+  height: 54%;
+  display: block;
+}
+
+/* Lighten on hover with a translucent inset wash (not filter/transform, which
+   would re-layer the sub-pixel-positioned plate and cause a 1px jitter). */
 .tile-button:hover,
 .tile-button:focus-visible {
-  filter: brightness(1.08);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, .5),
+    inset -1px -1px 0 rgba(0, 0, 0, .24),
+    inset 0 0 0 100px rgba(255, 255, 255, .14);
+}
+
+/* The cream icon plates are already near-white, so they need a much stronger
+   wash to read as lighting up. */
+.tile-button-icon:hover,
+.tile-button-icon:focus-visible {
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, .5),
+    inset -1px -1px 0 rgba(0, 0, 0, .24),
+    inset 0 0 0 100px rgba(255, 255, 255, .55);
 }
 
 /* Text printed over the tiled surface. */
@@ -121,22 +146,19 @@ button {
   pointer-events: none;
 }
 
-.nameplate-text .eyebrow {
-  margin-bottom: 10px;
-}
-
 .nameplate-text h1 {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   font-size: clamp(30px, 5.4vw, 48px);
   line-height: .96;
   color: var(--ink);
 }
 
-.nameplate-text p:not(.eyebrow) {
-  max-width: 28ch;
-  color: #3b423d;
+.nameplate-text p {
+  margin: 0;
+  max-width: 40ch;
+  color: #514b38;
   font-size: clamp(12px, 1.5vw, 15px);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .eyebrow {
