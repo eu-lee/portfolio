@@ -71,10 +71,10 @@ function drawStud(ctx, x, y, size, color) {
   const topR = size * 0.31; // true LEGO 5mm/8mm => 0.625 diameter
   const wallH = size * 0.07; // visible cylinder wall (slight top-down view)
   const cx = x + size / 2;
-  // Center the full stud silhouette (top face + the cylinder wall that hangs
-  // below it), not just the top face. Without the -wallH/2 lift the wall pushes
-  // the visible mass low and the stud reads as sitting below the brick center.
-  const cy = y + size / 2 - wallH / 2;
+  // Lift the stud slightly above the cell center. The cast shadow and wall
+  // crescent both add dark weight below the disc, so a dead-center top face
+  // reads as low; this nudge balances the composition optically.
+  const cy = y + size / 2 - size * 0.05;
 
   // --- Cast shadow on the plate: a tight contact shadow tucked under the
   //     stud's lower-right. Kept small so it fades before the corner/seam and
@@ -132,7 +132,7 @@ function drawStud(ctx, x, y, size, color) {
   ctx.clip();
 
   // --- Embossed LEGO wordmark (matte relief from the same top-left light). ---
-  if (size >= 12) {
+  if (size >= 9) {
     ctx.translate(cx, cy);
     ctx.scale(0.66, 1.7);
     ctx.textAlign = "center";
@@ -202,7 +202,7 @@ export function BrickCanvas({ src }) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
 
-      const columns = Math.max(34, Math.min(76, Math.round(width / 20)));
+      const columns = Math.max(40, Math.min(112, Math.round(width / 14)));
       const size = width / columns;
       const rows = Math.ceil(height / size);
 
