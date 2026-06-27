@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { filters, projects } from "./data/projects.js";
 import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
+import { Nameplate } from "./components/Nameplate.jsx";
 import { ProjectCard } from "./components/ProjectCard.jsx";
 import heroBackground from "./assets/backgrounds/bkg.jpg";
 
@@ -14,22 +15,7 @@ function Hero() {
   return (
     <section className="hero">
       <BrickCanvas src={heroBackground} />
-      <div className="hero-panel">
-        <p className="eyebrow">Software Engineering · University of Waterloo</p>
-        <h1>Eugene Lee</h1>
-        <nav className="hero-nav" aria-label="Primary navigation">
-          <a href="/projects" onClick={(event) => {
-            event.preventDefault();
-            navigateTo("/projects");
-          }}>
-            Projects
-          </a>
-        </nav>
-        <p>
-          I build with algorithms, machine learning, and transformers, assembled
-          one small piece at a time.
-        </p>
-      </div>
+      <Nameplate onNavigate={navigateTo} />
     </section>
   );
 }

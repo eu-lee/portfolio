@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { mixColor } from "../data/legoColors.js";
+import { studGrid } from "../lib/heroGrid.js";
 
 // Deterministic, position-locked surface variation so the field reads as real
 // plastic rather than flat CGI. Independent of the source image => fine grain.
@@ -189,9 +190,7 @@ export function BrickCanvas({ src }) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
 
-      const columns = Math.max(40, Math.min(112, Math.round(width / 14)));
-      const size = width / columns;
-      const rows = Math.ceil(height / size);
+      const { columns, size, rows } = studGrid(rect.width, rect.height);
 
       // Downsample the source into a columns x rows buffer, cover-fitting it
       // (center crop) so it matches a CSS `background-size: cover` framing.

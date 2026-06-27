@@ -62,16 +62,81 @@ button {
   height: 100%;
 }
 
-.hero-panel {
+/* Tiled LEGO nameplate: a grid of flat tiles paved edge-to-edge. Seams are
+   drawn per tile (light top-left edge, dark bottom-right groove) the same way
+   the stud field shades its base plates, rather than via a grid gap. Tiles, the
+   Projects button, and the text overlay all sit on the same 40x20 grid. */
+.nameplate {
   position: absolute;
-  left: clamp(18px, 5vw, 72px);
-  bottom: clamp(26px, 8vh, 84px);
-  width: min(520px, calc(100vw - 36px));
-  overflow: hidden;
-  border-radius: 6px;
-  padding: clamp(24px, 4vw, 34px);
-  background: #fff;
-  box-shadow: 0 16px 44px -18px rgba(0, 0, 0, .56);
+  /* left / top / width / height are set inline so the plate snaps onto an exact
+     40x20 block of the stud grid behind it. */
+  display: grid;
+  grid-template-columns: repeat(40, 1fr);
+  grid-template-rows: repeat(20, 1fr);
+  background: #d8c79d;
+}
+
+/* Flat tile: one uniform white. The seam is a fixed 1px directional edge —
+   light catch top/left, dark groove bottom/right — drawn with inset shadows so
+   it stays identical on every tile regardless of footprint (no tile-spanning
+   gradient that would make larger plates look more 3D). */
+.tile {
+  background: #f1e6c8;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, .5),
+    inset -1px -1px 0 rgba(0, 0, 0, .24);
+  pointer-events: none;
+}
+
+/* The Projects button, rendered as a 2x4 azure slab tile with the same seam. */
+.tile-button {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: var(--azure);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, .45),
+    inset -1px -1px 0 rgba(0, 0, 0, .3);
+  color: #08263c;
+  cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: clamp(10px, 1.4vw, 13px);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  transition: filter .2s ease;
+}
+
+.tile-button:hover,
+.tile-button:focus-visible {
+  filter: brightness(1.08);
+}
+
+/* Text printed over the tiled surface. */
+.nameplate-text {
+  grid-area: 1 / 1 / -1 / -1;
+  z-index: 3;
+  align-self: start;
+  padding: clamp(16px, 3.4vw, 26px);
+  pointer-events: none;
+}
+
+.nameplate-text .eyebrow {
+  margin-bottom: 10px;
+}
+
+.nameplate-text h1 {
+  margin-bottom: 10px;
+  font-size: clamp(30px, 5.4vw, 48px);
+  line-height: .96;
+  color: var(--ink);
+}
+
+.nameplate-text p:not(.eyebrow) {
+  max-width: 28ch;
+  color: #3b423d;
+  font-size: clamp(12px, 1.5vw, 15px);
+  line-height: 1.45;
 }
 
 .eyebrow {
