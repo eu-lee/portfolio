@@ -1,5 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { studGrid } from "../lib/heroGrid.js";
+import { useMemo } from "react";
 
 // The nameplate is a procedurally tiled LEGO "plate": the Projects button
 // reserves a 2x4 slab and the rest of the grid is paved edge-to-edge with flat
@@ -117,40 +116,29 @@ function buildPlate() {
 
 const area = (tile) => `${tile.r + 1} / ${tile.c + 1} / span ${tile.h} / span ${tile.w}`;
 
-export function Nameplate({ onNavigate }) {
+export function Nameplate({ grid, onNavigate }) {
   const tiles = useMemo(buildPlate, []);
-  const ref = useRef(null);
-  const [box, setBox] = useState(null);
 
-  // Snap the plate onto a COLS x ROWS block of the stud grid behind it: same
-  // cell size, top-left on an exact cell boundary, anchored near bottom-left.
-  useLayoutEffect(() => {
-    const hero = ref.current?.parentElement;
-    if (!hero) return undefined;
-
-    const measure = () => {
-      const rect = hero.getBoundingClientRect();
-      const { columns, rows, size } = studGrid(rect.width, rect.height);
-      const col = Math.max(0, Math.min(MARGIN, columns - COLS));
-      const row = Math.max(0, rows - ROWS - MARGIN);
-      setBox({
-        left: col * size,
-        top: row * size,
-        width: COLS * size,
-        height: ROWS * size
-      });
+  // Snap the plate onto a COLS x ROWS block of the shared stud grid: same cell
+  // size, top-left on an exact cell boundary, anchored near bottom-left. The
+  // grid is measured once by the hero and handed to both layers, so the plate
+  // sits on the identical cells the canvas drew.
+  const box = useMemo(() => {
+    if (!grid) return null;
+    const { columns, rows, size } = grid;
+    const col = Math.max(0, Math.min(MARGIN, columns - COLS));
+    const row = Math.max(0, rows - ROWS - MARGIN);
+    return {
+      left: col * size,
+      top: row * size,
+      width: COLS * size,
+      height: ROWS * size
     };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(hero);
-    return () => observer.disconnect();
-  }, []);
+  }, [grid]);
 
   return (
     <div
       className="nameplate"
-      ref={ref}
       style={
         box
           ? { left: `${box.left}px`, top: `${box.top}px`, width: `${box.width}px`, height: `${box.height}px` }

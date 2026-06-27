@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { filters, projects } from "./data/projects.js";
 import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
 import { Nameplate } from "./components/Nameplate.jsx";
 import { ProjectCard } from "./components/ProjectCard.jsx";
+import { useStudGrid } from "./lib/heroGrid.js";
 import heroBackground from "./assets/backgrounds/bkg.jpg";
 
 function navigateTo(path) {
@@ -12,10 +13,16 @@ function navigateTo(path) {
 }
 
 function Hero() {
+  // Measure the hero once and resolve the stud grid here; both the canvas and
+  // the nameplate consume the same grid so they can't round onto different
+  // layouts (which is what made the plate drift off the studs under zoom).
+  const heroRef = useRef(null);
+  const grid = useStudGrid(heroRef);
+
   return (
-    <section className="hero">
-      <BrickCanvas src={heroBackground} />
-      <Nameplate onNavigate={navigateTo} />
+    <section className="hero" ref={heroRef}>
+      <BrickCanvas src={heroBackground} grid={grid} />
+      <Nameplate grid={grid} onNavigate={navigateTo} />
     </section>
   );
 }
@@ -120,6 +127,19 @@ export default function App() {
     const onPopState = () => setPath(window.location.pathname);
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  // Cancel the pinch-zoom gesture (trackpad pinch and Ctrl+wheel both arrive as
+  // a wheel event with ctrlKey set). This blocks the blurry bitmap magnify
+  // without touching keyboard/menu zoom, which stays available for
+  // accessibility and reflows the studs crisply. Must be non-passive so
+  // preventDefault takes effect.
+  useEffect(() => {
+    const onWheel = (event) => {
+      if (event.ctrlKey) event.preventDefault();
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
   }, []);
 
   const isProjectsPage = path === "/projects";

@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mixColor } from "../data/legoColors.js";
-import { studGrid } from "../lib/heroGrid.js";
 
 // Deterministic, position-locked surface variation so the field reads as real
 // plastic rather than flat CGI. Independent of the source image => fine grain.
@@ -138,28 +137,57 @@ function drawStud(ctx, x, y, size, color) {
 
 // Renders `src` as a wall of LEGO studs: the image is downsampled so each stud
 // covers one source region, and the stud is tinted with that region's average
-// color. Static (re-renders on resize / source change), since the input is a
-// fixed image rather than an animation.
-export function BrickCanvas({ src }) {
+// color. Static (re-renders on grid / source change), since the input is a
+// fixed image rather than an animation. The grid ({ columns, rows, size, width,
+// height, dpr }) is measured once by the hero and shared with the nameplate so
+// the two layers stay locked together at every zoom level.
+export function BrickCanvas({ src, grid }) {
   const canvasRef = useRef(null);
+  const imageRef = useRef(null);
+  // One detailed stud rendered per (quantized) tint, reused across the wall and
+  // across redraws; only rebuilt when the stud size or DPR changes.
+  const spriteRef = useRef({ cache: new Map(), key: "" });
+  const [loaded, setLoaded] = useState(false);
 
+  // Load the source once per src; redraws reuse the decoded image.
   useEffect(() => {
-    if (!src) return undefined;
+    const image = new Image();
+    let cancelled = false;
+    setLoaded(false);
+    const onReady = () => {
+      if (cancelled) return;
+      imageRef.current = image;
+      setLoaded(true);
+    };
+    image.onload = onReady;
+    image.src = src;
+    if (image.complete && image.naturalWidth > 0) onReady();
+    return () => {
+      cancelled = true;
+      image.onload = null;
+    };
+  }, [src]);
+
+  // Redraw whenever the shared grid or the loaded image changes.
+  useEffect(() => {
+    const image = imageRef.current;
+    if (!grid || !loaded || !image || image.naturalWidth === 0) return;
+
+    const { columns, rows, size, dpr } = grid;
+    const width = Math.ceil(grid.width);
+    const height = Math.ceil(grid.height);
+    if (width === 0 || height === 0) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Offscreen buffer that downsamples the source image to the stud grid; the
-    // browser averages each source region for us as it scales the draw down.
-    const sampler = document.createElement("canvas");
-    const sctx = sampler.getContext("2d", { willReadFrequently: true });
-
-    // One detailed stud rendered per (quantized) tint, reused across the wall.
-    let spriteCache = new Map();
-    let cacheKey = "";
-
-    function getSprite(hex, size, dpr) {
-      const cached = spriteCache.get(hex);
+    function getSprite(hex) {
+      const cached = spriteRef.current.cache.get(hex);
       if (cached) return cached;
       const off = document.createElement("canvas");
       const px = Math.max(1, Math.ceil(size * dpr));
@@ -168,76 +196,48 @@ export function BrickCanvas({ src }) {
       const octx = off.getContext("2d");
       octx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawStud(octx, 0, 0, size, { value: hex, alpha: 1 });
-      spriteCache.set(hex, off);
+      spriteRef.current.cache.set(hex, off);
       return off;
     }
 
-    const image = new Image();
-    let cancelled = false;
+    // Offscreen buffer that downsamples the source image to the stud grid; the
+    // browser averages each source region for us as it scales the draw down.
+    const sampler = document.createElement("canvas");
+    const sctx = sampler.getContext("2d", { willReadFrequently: true });
 
-    function render() {
-      if (cancelled || !image.complete || image.naturalWidth === 0) return;
+    // Downsample the source into a columns x rows buffer, cover-fitting it
+    // (center crop) so it matches a CSS `background-size: cover` framing.
+    sampler.width = columns;
+    sampler.height = rows;
+    const scale = Math.max(columns / image.naturalWidth, rows / image.naturalHeight);
+    const dw = image.naturalWidth * scale;
+    const dh = image.naturalHeight * scale;
+    sctx.clearRect(0, 0, columns, rows);
+    sctx.drawImage(image, (columns - dw) / 2, (rows - dh) / 2, dw, dh);
+    const pixels = sctx.getImageData(0, 0, columns, rows).data;
 
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      const width = Math.ceil(rect.width);
-      const height = Math.ceil(rect.height);
-      if (width === 0 || height === 0) return;
-
-      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      }
-
-      const { columns, size, rows } = studGrid(rect.width, rect.height);
-
-      // Downsample the source into a columns x rows buffer, cover-fitting it
-      // (center crop) so it matches a CSS `background-size: cover` framing.
-      sampler.width = columns;
-      sampler.height = rows;
-      const scale = Math.max(columns / image.naturalWidth, rows / image.naturalHeight);
-      const dw = image.naturalWidth * scale;
-      const dh = image.naturalHeight * scale;
-      sctx.clearRect(0, 0, columns, rows);
-      sctx.drawImage(image, (columns - dw) / 2, (rows - dh) / 2, dw, dh);
-      const pixels = sctx.getImageData(0, 0, columns, rows).data;
-
-      // Rebuild the sprite cache only when the stud size (or DPR) changes.
-      const key = `${size.toFixed(3)}:${dpr}`;
-      if (key !== cacheKey) {
-        spriteCache = new Map();
-        cacheKey = key;
-      }
-
-      for (let y = 0; y < rows; y += 1) {
-        for (let x = 0; x < columns; x += 1) {
-          const i = (y * columns + x) * 4;
-          const hex = quantizeHex(pixels[i], pixels[i + 1], pixels[i + 2]);
-          const px = x * size;
-          const py = y * size;
-          ctx.drawImage(getSprite(hex, size, dpr), px, py, size, size);
-
-          const j = surfaceJitter(x, y);
-          ctx.globalAlpha = Math.abs(j) * 0.05;
-          ctx.fillStyle = j > 0 ? "#fff" : "#000";
-          ctx.fillRect(px, py, size, size);
-          ctx.globalAlpha = 1;
-        }
-      }
+    // Rebuild the sprite cache only when the stud size (or DPR) changes.
+    const key = `${size.toFixed(3)}:${dpr}`;
+    if (key !== spriteRef.current.key) {
+      spriteRef.current = { cache: new Map(), key };
     }
 
-    image.onload = render;
-    image.src = src;
-    if (image.complete && image.naturalWidth > 0) render();
+    for (let y = 0; y < rows; y += 1) {
+      for (let x = 0; x < columns; x += 1) {
+        const i = (y * columns + x) * 4;
+        const hex = quantizeHex(pixels[i], pixels[i + 1], pixels[i + 2]);
+        const px = x * size;
+        const py = y * size;
+        ctx.drawImage(getSprite(hex), px, py, size, size);
 
-    window.addEventListener("resize", render);
-    return () => {
-      cancelled = true;
-      image.onload = null;
-      window.removeEventListener("resize", render);
-    };
-  }, [src]);
+        const j = surfaceJitter(x, y);
+        ctx.globalAlpha = Math.abs(j) * 0.05;
+        ctx.fillStyle = j > 0 ? "#fff" : "#000";
+        ctx.fillRect(px, py, size, size);
+        ctx.globalAlpha = 1;
+      }
+    }
+  }, [grid, loaded]);
 
   return <canvas className="brick-canvas" ref={canvasRef} aria-hidden="true" />;
 }
