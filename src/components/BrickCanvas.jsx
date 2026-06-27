@@ -1,27 +1,41 @@
 import { useEffect, useRef } from "react";
-import { heroRamp, mixColor } from "../data/legoColors.js";
-
-function flowColor(x, y, t, w, h) {
-  const fx = x / Math.max(1, w - 1);
-  const fy = y / Math.max(1, h - 1);
-  const value =
-    Math.sin(fx * 13 + t) +
-    Math.sin(fy * 10 + t * 0.85) +
-    Math.sin((fx + fy) * 7.5 + t * 1.25) +
-    Math.sin(Math.hypot(fx - 0.55, fy - 0.4) * 12 - t * 1.1);
-  const normalized = Math.max(0, Math.min(0.999, (value + 4) / 8));
-  return heroRamp[Math.floor(normalized * heroRamp.length)];
-}
+import { LEGO_COLORS, hexToRgb, mixColor } from "../data/legoColors.js";
 
 // Deterministic, position-locked surface variation so the field reads as real
-// plastic rather than flat CGI. Independent of time => no shimmer when animated.
+// plastic rather than flat CGI. Independent of the source image => fine grain.
 function surfaceJitter(x, y) {
   const h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
   return h - Math.floor(h) - 0.5; // [-0.5, 0.5]
 }
 
+// Real LEGO colors, precomputed to RGB once. Snapping each sampled pixel to the
+// nearest of these is what keeps the studs looking like molded plastic: the
+// palette is saturated and well-spaced, so drawStud's light/shadow grades read
+// clearly — whereas raw photo tints are muddy and collapse the shading to flat.
+const PALETTE = Object.values(LEGO_COLORS).map((color) => ({
+  color,
+  rgb: hexToRgb(color.value)
+}));
+
+function nearestLegoColor(r, g, b) {
+  let best = PALETTE[0];
+  let bestDistance = Infinity;
+  for (const entry of PALETTE) {
+    const dr = r - entry.rgb.r;
+    const dg = g - entry.rgb.g;
+    const db = b - entry.rgb.b;
+    const distance = dr * dr + dg * dg + db * db;
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = entry;
+    }
+  }
+  return best.color;
+}
+
 // Single light direction: top-left. Highlights live upper-left, shadows fall
-// toward the bottom-right. Every term below is derived from that one choice.
+// toward the bottom-right. `color` is any { value: "#rrggbb", alpha } — the tint
+// is supplied per stud by sampling the source image, not a fixed LEGO palette.
 function drawStud(ctx, x, y, size, color) {
   const alpha = color.alpha ?? 1;
 
@@ -134,15 +148,25 @@ function drawStud(ctx, x, y, size, color) {
   ctx.restore();
 }
 
-export function BrickCanvas() {
+// Renders `src` as a wall of LEGO studs: the image is downsampled so each stud
+// covers one source region, and the stud is tinted with that region's average
+// color. Static (re-renders on resize / source change), since the input is a
+// fixed image rather than an animation.
+export function BrickCanvas({ src }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    if (!src) return undefined;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    let frame = 0;
-    let animationId;
-    // One detailed stud rendered per palette color, reused every frame.
+
+    // Offscreen buffer that downsamples the source image to the stud grid; the
+    // browser averages each source region for us as it scales the draw down.
+    const sampler = document.createElement("canvas");
+    const sctx = sampler.getContext("2d", { willReadFrequently: true });
+
+    // One detailed stud rendered per (quantized) tint, reused across the wall.
     let spriteCache = new Map();
     let cacheKey = "";
 
@@ -160,11 +184,17 @@ export function BrickCanvas() {
       return off;
     }
 
+    const image = new Image();
+    let cancelled = false;
+
     function render() {
+      if (cancelled || !image.complete || image.naturalWidth === 0) return;
+
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       const width = Math.ceil(rect.width);
       const height = Math.ceil(rect.height);
+      if (width === 0 || height === 0) return;
 
       if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
         canvas.width = width * dpr;
@@ -175,7 +205,17 @@ export function BrickCanvas() {
       const columns = Math.max(34, Math.min(76, Math.round(width / 20)));
       const size = width / columns;
       const rows = Math.ceil(height / size);
-      const t = frame * 0.025;
+
+      // Downsample the source into a columns x rows buffer, cover-fitting it
+      // (center crop) so it matches a CSS `background-size: cover` framing.
+      sampler.width = columns;
+      sampler.height = rows;
+      const scale = Math.max(columns / image.naturalWidth, rows / image.naturalHeight);
+      const dw = image.naturalWidth * scale;
+      const dh = image.naturalHeight * scale;
+      sctx.clearRect(0, 0, columns, rows);
+      sctx.drawImage(image, (columns - dw) / 2, (rows - dh) / 2, dw, dh);
+      const pixels = sctx.getImageData(0, 0, columns, rows).data;
 
       // Rebuild the sprite cache only when the stud size (or DPR) changes.
       const key = `${size.toFixed(3)}:${dpr}`;
@@ -186,7 +226,8 @@ export function BrickCanvas() {
 
       for (let y = 0; y < rows; y += 1) {
         for (let x = 0; x < columns; x += 1) {
-          const color = flowColor(x, y, t, columns, rows);
+          const i = (y * columns + x) * 4;
+          const color = nearestLegoColor(pixels[i], pixels[i + 1], pixels[i + 2]);
           const px = x * size;
           const py = y * size;
           ctx.drawImage(getSprite(color, size, dpr), px, py, size, size);
@@ -198,14 +239,19 @@ export function BrickCanvas() {
           ctx.globalAlpha = 1;
         }
       }
-
-      frame += 1;
-      animationId = requestAnimationFrame(render);
     }
 
-    render();
-    return () => cancelAnimationFrame(animationId);
-  }, []);
+    image.onload = render;
+    image.src = src;
+    if (image.complete && image.naturalWidth > 0) render();
+
+    window.addEventListener("resize", render);
+    return () => {
+      cancelled = true;
+      image.onload = null;
+      window.removeEventListener("resize", render);
+    };
+  }, [src]);
 
   return <canvas className="brick-canvas" ref={canvasRef} aria-hidden="true" />;
 }

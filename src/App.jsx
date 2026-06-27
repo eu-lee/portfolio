@@ -3,6 +3,7 @@ import { filters, projects } from "./data/projects.js";
 import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
 import { ProjectCard } from "./components/ProjectCard.jsx";
+import heroBackground from "./assets/backgrounds/bkg.jpg";
 
 function navigateTo(path) {
   window.history.pushState({}, "", path);
@@ -12,7 +13,7 @@ function navigateTo(path) {
 function Hero() {
   return (
     <section className="hero">
-      <BrickCanvas />
+      <BrickCanvas src={heroBackground} />
       <div className="hero-panel">
         <p className="eyebrow">Software Engineering · University of Waterloo</p>
         <h1>Eugene Lee</h1>

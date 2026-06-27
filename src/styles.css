@@ -50,6 +50,9 @@ button {
   min-height: 100svh;
   overflow: hidden;
   background: var(--azure);
+  /* Lock native pinch-zoom and pan gestures that start on the hero. */
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 .brick-canvas {
