@@ -10,7 +10,7 @@
   --ink: #16212B;
   --muted: #68706B;
   --line: #E5E7E3;
-  --paper: #FAFAF7;
+  --paper: #F4ECD7;
   --dark: #10161B;
 }
 
@@ -50,8 +50,7 @@ button {
   min-height: 100svh;
   overflow: hidden;
   /* The wall is fitted to a whole number of studs and centred, so a thin ring of
-     the hero shows around it as a border. Keep that ring a deliberate dark frame
-     rather than the azure that used to bleed through the seams. */
+     the hero shows around it as a border. */
   background: var(--dark);
   /* Lock native pinch-zoom and pan gestures that start on the hero. */
   touch-action: none;
@@ -75,6 +74,7 @@ button {
 
 .frame-line {
   position: absolute;
+  /* White wires so the 3x3 grid stays visible on the dark frame. */
   background: var(--white);
 }
 
@@ -177,8 +177,12 @@ button {
 }
 
 .nameplate-text h1 {
-  margin-bottom: 14px;
-  font-size: clamp(30px, 5.4vw, 48px);
+  /* Sized in stud units (--stud is the live stud size) so the heading scales
+     with the nameplate at every resolution instead of with the viewport. Kept
+     small enough that heading + paragraph fit above the button row (the text
+     budget is ~6 studs tall) rather than spilling over the buttons. */
+  margin-bottom: calc(var(--stud) * 0.45);
+  font-size: calc(var(--stud) * 1.9);
   /* line-height 1 (not <1) so the glyphs don't bleed above their line box and
      the name reads as a clean 1 stud below the plate's top padding. */
   line-height: 1;
@@ -188,9 +192,10 @@ button {
 .nameplate-text p {
   margin: 0;
   /* No max-width: let the text fill the padded plate and wrap right at the
-     1-stud padding edge instead of stopping short. */
-  font-size: clamp(12px, 1.5vw, 15px);
-  line-height: 1.5;
+     1-stud padding edge instead of stopping short. Sized in stud units so it
+     scales with the plate. */
+  font-size: calc(var(--stud) * 0.7);
+  line-height: 1.4;
 }
 
 .eyebrow {
