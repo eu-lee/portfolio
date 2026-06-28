@@ -6,8 +6,8 @@ import { useMemo } from "react";
 // a stud base plate (light top-left catch, dark bottom-right groove), just
 // without the raised stud on top.
 
-const COLS = 40;
-const ROWS = 20;
+const COLS = 20;
+const ROWS = 10;
 
 // Footprints grouped by priority (w = columns, h = rows). At each open cell the
 // packer tries 2x4 first to maximize those, then 1x4, then 1x2, then 1x1 to
@@ -26,7 +26,8 @@ const PIECE_GROUPS = [
 // A left-aligned row of colored "plate" buttons along the bottom: a wide text
 // plate for Projects, then square 2x2 icon plates for GitHub and LinkedIn. The
 // packer reserves these footprints and fills the rest around them.
-const BUTTON_ROW = ROWS - 4;
+// Buttons are 2 studs tall; place them so just 1 stud of tiles sits below.
+const BUTTON_ROW = ROWS - 3;
 const BUTTONS = [
   { id: "projects", label: "Projects", href: "/projects", internal: true, bg: "var(--azure)", ink: "#08263c", r: BUTTON_ROW, c: 1, w: 6, h: 2 },
   { id: "github", label: "GitHub", icon: "github", href: "#", bg: "#f1e6c8", ink: "#1b2530", r: BUTTON_ROW, c: 8, w: 2, h: 2 },
@@ -47,8 +48,10 @@ const ICONS = {
   )
 };
 
-// Cells of clearance from the hero's left/bottom edges when snapping the plate.
-const MARGIN = 3;
+// Cells of clearance from the wall's left/bottom edges when snapping the plate.
+// 0 => the plate's bottom-left sits flush in the wall's bottom-left corner, right
+// where the white wireframe lines meet.
+const MARGIN = 0;
 
 // Small deterministic PRNG so the layout is stable across renders.
 function mulberry32(seed) {
@@ -134,7 +137,8 @@ export function Nameplate({ grid, onNavigate }) {
       left: offsetX + col * size,
       top: offsetY + row * size,
       width: COLS * size,
-      height: ROWS * size
+      height: ROWS * size,
+      stud: size
     };
   }, [grid]);
 
@@ -143,7 +147,14 @@ export function Nameplate({ grid, onNavigate }) {
       className="nameplate"
       style={
         box
-          ? { left: `${box.left}px`, top: `${box.top}px`, width: `${box.width}px`, height: `${box.height}px` }
+          ? {
+              left: `${box.left}px`,
+              top: `${box.top}px`,
+              width: `${box.width}px`,
+              height: `${box.height}px`,
+              // One stud, exposed so the text can pad in by exactly a stud.
+              "--stud": `${box.stud}px`
+            }
           : { visibility: "hidden" }
       }
     >
@@ -178,8 +189,7 @@ export function Nameplate({ grid, onNavigate }) {
 
       <div className="nameplate-text">
         <h1>Eugene Lee</h1>
-        <p>I study Software Engineering at the University of Waterloo.</p>
-        <p>I&rsquo;m interested in algorithms and machine learning.</p>
+        <p>I study Software Engineering at the University of Waterloo. I have an interest towards algorithms.</p>
       </div>
     </div>
   );

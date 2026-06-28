@@ -93,14 +93,14 @@ button {
 /* Tiled LEGO nameplate: a grid of flat tiles paved edge-to-edge. Seams are
    drawn per tile (light top-left edge, dark bottom-right groove) the same way
    the stud field shades its base plates, rather than via a grid gap. Tiles, the
-   Projects button, and the text overlay all sit on the same 40x20 grid. */
+   Projects button, and the text overlay all sit on the same 20x10 grid. */
 .nameplate {
   position: absolute;
   /* left / top / width / height are set inline so the plate snaps onto an exact
-     40x20 block of the stud grid behind it. */
+     20x10 block of the stud grid behind it. */
   display: grid;
-  grid-template-columns: repeat(40, 1fr);
-  grid-template-rows: repeat(20, 1fr);
+  grid-template-columns: repeat(20, 1fr);
+  grid-template-rows: repeat(10, 1fr);
   background: #d8c79d;
 }
 
@@ -170,21 +170,25 @@ button {
   grid-area: 1 / 1 / -1 / -1;
   z-index: 3;
   align-self: start;
-  padding: clamp(16px, 3.4vw, 26px);
+  /* Pad in by exactly one stud, so the text can reach to 1 stud from the plate's
+     top and side edges. --stud is the live stud size, set inline on .nameplate. */
+  padding: var(--stud);
   pointer-events: none;
 }
 
 .nameplate-text h1 {
   margin-bottom: 14px;
   font-size: clamp(30px, 5.4vw, 48px);
-  line-height: .96;
+  /* line-height 1 (not <1) so the glyphs don't bleed above their line box and
+     the name reads as a clean 1 stud below the plate's top padding. */
+  line-height: 1;
   color: var(--ink);
 }
 
 .nameplate-text p {
   margin: 0;
-  max-width: 40ch;
-  color: #514b38;
+  /* No max-width: let the text fill the padded plate and wrap right at the
+     1-stud padding edge instead of stopping short. */
   font-size: clamp(12px, 1.5vw, 15px);
   line-height: 1.5;
 }
