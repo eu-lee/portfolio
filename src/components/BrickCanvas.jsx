@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { decompressFrames, parseGIF } from "gifuct-js";
 import { mixColor } from "../data/legoColors.js";
 
 // Deterministic, position-locked surface variation so the field reads as real
@@ -18,6 +19,75 @@ function quantizeHex(r, g, b) {
   const packed =
     (1 << 24) + (quantizeChannel(r) << 16) + (quantizeChannel(g) << 8) + quantizeChannel(b);
   return `#${packed.toString(16).slice(1)}`;
+}
+
+const GIF_SOURCE_RE = /\.gif(?:$|[?#])/i;
+const VIDEO_SOURCE_RE = /\.(mp4|webm|ogg|ogv|mov)(?:$|[?#])/i;
+
+function mediaKindFromSrc(src) {
+  if (VIDEO_SOURCE_RE.test(src)) return "video";
+  if (GIF_SOURCE_RE.test(src)) return "gif";
+  return "image";
+}
+
+function mediaSize(media, kind) {
+  if (kind === "video") {
+    return { width: media.videoWidth, height: media.videoHeight };
+  }
+  if (kind === "gif") {
+    return { width: media.width, height: media.height };
+  }
+  return { width: media.naturalWidth, height: media.naturalHeight };
+}
+
+function composeGifFrames(parsedGif, frames) {
+  const width = parsedGif.lsd.width;
+  const height = parsedGif.lsd.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  const composed = [];
+  let previousFrame = null;
+  let restoreData = null;
+
+  for (const frame of frames) {
+    if (previousFrame?.disposalType === 2) {
+      const { left, top, width: frameWidth, height: frameHeight } = previousFrame.dims;
+      ctx.clearRect(left, top, frameWidth, frameHeight);
+    } else if (previousFrame?.disposalType === 3 && restoreData) {
+      ctx.putImageData(restoreData.data, restoreData.left, restoreData.top);
+      restoreData = null;
+    }
+
+    const { left, top, width: frameWidth, height: frameHeight } = frame.dims;
+    if (frame.disposalType === 3) {
+      restoreData = {
+        left,
+        top,
+        data: ctx.getImageData(left, top, frameWidth, frameHeight)
+      };
+    }
+
+    const patchCanvas = document.createElement("canvas");
+    patchCanvas.width = frameWidth;
+    patchCanvas.height = frameHeight;
+    patchCanvas.getContext("2d").putImageData(new ImageData(frame.patch, frameWidth, frameHeight), 0, 0);
+    ctx.drawImage(patchCanvas, left, top);
+
+    const fullFrame = document.createElement("canvas");
+    fullFrame.width = width;
+    fullFrame.height = height;
+    fullFrame.getContext("2d").drawImage(canvas, 0, 0);
+    composed.push({
+      source: fullFrame,
+      delay: Math.max(20, frame.delay || 100)
+    });
+
+    previousFrame = frame;
+  }
+
+  return { width, height, frames: composed };
 }
 
 // Single light direction: top-left. Highlights live upper-left, shadows fall
@@ -149,38 +219,65 @@ export function BrickCanvas({
   focalY = 0.5,
   mediaDarken = 0
 }) {
+  const kind = mediaKindFromSrc(src);
   const canvasRef = useRef(null);
-  const imageRef = useRef(null);
+  const imageElementRef = useRef(null);
+  const videoElementRef = useRef(null);
+  const gifRef = useRef(null);
   // One detailed stud rendered per (quantized) tint, reused across the wall and
   // across redraws; only rebuilt when the stud size or DPR changes.
   const spriteRef = useRef({ cache: new Map(), key: "" });
-  const [loaded, setLoaded] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  // Load the source once per src; redraws reuse the decoded image.
+  // Reset readiness when the source changes; the hidden DOM media element below
+  // will flip this back on from its load event.
   useEffect(() => {
-    const image = new Image();
+    setReady(false);
+    gifRef.current = null;
+  }, [src, kind]);
+
+  useEffect(() => {
+    if (kind !== "gif") return undefined;
     let cancelled = false;
-    setLoaded(false);
-    const onReady = () => {
-      if (cancelled) return;
-      imageRef.current = image;
-      setLoaded(true);
-    };
-    image.onload = onReady;
-    image.src = src;
-    if (image.complete && image.naturalWidth > 0) onReady();
+
+    fetch(src)
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => {
+        if (cancelled) return;
+        const parsedGif = parseGIF(buffer);
+        const frames = decompressFrames(parsedGif, true);
+        gifRef.current = composeGifFrames(parsedGif, frames);
+        setReady(true);
+      })
+      .catch((error) => {
+        console.error("Failed to decode GIF background", error);
+      });
+
     return () => {
       cancelled = true;
-      image.onload = null;
     };
-  }, [src]);
+  }, [kind, src]);
+
+  useEffect(() => {
+    if (kind !== "video" || !ready) return undefined;
+    const video = videoElementRef.current;
+    if (!video) return undefined;
+    video.play().catch(() => {});
+    return () => video.pause();
+  }, [kind, ready, src]);
 
   // Redraw whenever the shared grid or the loaded image changes. Animated GIFs
   // need repeated draws because a canvas only stores the frame last painted into
   // it; the GIF can keep advancing but the canvas will not update by itself.
   useEffect(() => {
-    const image = imageRef.current;
-    if (!grid || !loaded || !image || image.naturalWidth === 0) return;
+    const gif = gifRef.current;
+    const media = kind === "video"
+      ? videoElementRef.current
+      : kind === "gif"
+        ? gif
+        : imageElementRef.current;
+    const sourceSize = media ? mediaSize(media, kind) : { width: 0, height: 0 };
+    if (!grid || !ready || !media || sourceSize.width === 0 || sourceSize.height === 0) return;
 
     const { columns, rows, cell, deviceWidth, deviceHeight } = grid;
     if (deviceWidth === 0 || deviceHeight === 0) return;
@@ -220,9 +317,9 @@ export function BrickCanvas({
     // horizontal manual nudge when needed.
     sampler.width = columns;
     sampler.height = rows;
-    const scale = Math.max(columns / image.naturalWidth, rows / image.naturalHeight);
-    const dw = image.naturalWidth * scale;
-    const dh = image.naturalHeight * scale;
+    const scale = Math.max(columns / sourceSize.width, rows / sourceSize.height);
+    const dw = sourceSize.width * scale;
+    const dh = sourceSize.height * scale;
     const clampedFocalX = Math.max(0, Math.min(1, focalX));
     const clampedFocalY = Math.max(0, Math.min(1, focalY));
 
@@ -285,10 +382,10 @@ export function BrickCanvas({
       }
     }
 
-    const drawFrame = () => {
+    const drawFrame = (source) => {
       sctx.clearRect(0, 0, columns, rows);
       sctx.drawImage(
-        image,
+        source,
         (columns - dw) * clampedFocalX + panStuds,
         (rows - dh) * clampedFocalY,
         dw,
@@ -346,31 +443,64 @@ export function BrickCanvas({
       ctx.fillRect(0, deviceHeight - BOTTOM_SOLID_ROWS * cell, deviceWidth, BOTTOM_SOLID_ROWS * cell);
     };
 
-    const isGif = /\.gif(?:$|[?#])/i.test(src);
     const frameMs = 1000 / 12;
     let animationFrame = 0;
+    let videoFrame = 0;
+    let gifTimer = 0;
     let lastDraw = 0;
     let stopped = false;
 
     const tick = (time) => {
       if (stopped) return;
       if (time - lastDraw >= frameMs) {
-        drawFrame();
+        drawFrame(media);
         lastDraw = time;
       }
       animationFrame = requestAnimationFrame(tick);
     };
 
-    drawFrame();
-    if (isGif) {
-      animationFrame = requestAnimationFrame(tick);
+    if (kind === "gif") {
+      let frameIndex = 0;
+      const gifFrames = media.frames;
+      const drawNextGifFrame = () => {
+        if (stopped || gifFrames.length === 0) return;
+        const frame = gifFrames[frameIndex];
+        drawFrame(frame.source);
+        frameIndex = (frameIndex + 1) % gifFrames.length;
+        gifTimer = window.setTimeout(drawNextGifFrame, frame.delay);
+      };
+      drawNextGifFrame();
+    } else if (kind === "video") {
+      drawFrame(media);
+      const scheduleVideoFrame = () => {
+        if (stopped) return;
+        if (typeof media.requestVideoFrameCallback === "function") {
+          videoFrame = media.requestVideoFrameCallback((time) => {
+            if (stopped) return;
+            if (time - lastDraw >= frameMs) {
+              drawFrame(media);
+              lastDraw = time;
+            }
+            scheduleVideoFrame();
+          });
+        } else {
+          animationFrame = requestAnimationFrame(tick);
+        }
+      };
+      scheduleVideoFrame();
+    } else {
+      drawFrame(media);
     }
 
     return () => {
       stopped = true;
       if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (gifTimer) window.clearTimeout(gifTimer);
+      if (videoFrame && typeof media.cancelVideoFrameCallback === "function") {
+        media.cancelVideoFrameCallback(videoFrame);
+      }
     };
-  }, [grid, loaded, src, panStuds, focalX, focalY, mediaDarken]);
+  }, [grid, kind, ready, src, panStuds, focalX, focalY, mediaDarken]);
 
   // Position the fitted wall in CSS px and centre it; the leftover ring is the
   // border frame. (The canvas backing store is sized in device px above.)
@@ -383,5 +513,32 @@ export function BrickCanvas({
       }
     : { display: "none" };
 
-  return <canvas className="brick-canvas" ref={canvasRef} style={style} aria-hidden="true" />;
+  return (
+    <>
+      {kind === "video" ? (
+        <video
+          ref={videoElementRef}
+          className="brick-media-source"
+          src={src}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          crossOrigin="anonymous"
+          onLoadedData={() => setReady(true)}
+          aria-hidden="true"
+        />
+      ) : kind === "image" ? (
+        <img
+          ref={imageElementRef}
+          className="brick-media-source"
+          src={src}
+          alt=""
+          onLoad={() => setReady(true)}
+          aria-hidden="true"
+        />
+      ) : null}
+      <canvas className="brick-canvas" ref={canvasRef} style={style} aria-hidden="true" />
+    </>
+  );
 }

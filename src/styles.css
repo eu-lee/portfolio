@@ -77,6 +77,17 @@ button {
   z-index: 1;
 }
 
+.brick-media-source {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: 1px;
+  height: 1px;
+  opacity: .01;
+  pointer-events: none;
+}
+
 /* Thin white wire box inset from the screen edges; each line runs the full
    width/height so they read as a framing grid laid over the pixels. */
 .hero-frame {
