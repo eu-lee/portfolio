@@ -41,6 +41,19 @@ function Hero() {
   const linksRef = useRef(null);
   const grid = useStudGrid(heroRef);
 
+  // Load-in choreography: once the grid has resolved (so the wires land on their
+  // real positions, not the CSS fallbacks), flip on `is-intro-ready`, which kicks
+  // off the staged CSS animation — wires draw in, then the mosaic + text fade up.
+  // Guarded so a resize re-measure doesn't replay it.
+  const [introReady, setIntroReady] = useState(false);
+  const introPlayedRef = useRef(false);
+  useEffect(() => {
+    if (introPlayedRef.current || !grid) return;
+    introPlayedRef.current = true;
+    const id = requestAnimationFrame(() => setIntroReady(true));
+    return () => cancelAnimationFrame(id);
+  }, [grid]);
+
   // The nav links are right-aligned, so their left edge depends on the text
   // width (and the font once it loads). Measure it so the vertical wire can sit
   // just to the left of the first link ("home"), running down through the frame.
@@ -95,7 +108,11 @@ function Hero() {
     : undefined;
 
   return (
-    <section className="hero" ref={heroRef} style={frameVars}>
+    <section
+      className={`hero is-intro${introReady ? " is-intro-ready" : ""}`}
+      ref={heroRef}
+      style={frameVars}
+    >
       <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} />
 
       {/* White wire box on the inner frame edges, extending out across the black
@@ -153,11 +170,11 @@ function Hero() {
       <div className="hero-content">
         <h1 className="hero-name">Eugene Lee</h1>
         <p className="hero-tagline">
-          I study Software Engineering at the University of Waterloo and have an interest towards hard problems and algorithms. I currently work at Eureka DevSecOps, where I work on agents for automated code vulnerability remediation.
+          I'm a Software Engineering student at the University of Waterloo with an interest for hard problems and algorithms. My current work at Eureka DevSecOps revolves around building agents for automated code vulnerability remediation.
         </p>
         <div className="hero-socials">
 
-          Feel free to reach out:
+          Feel free to contact me through:
           <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
             {ICONS.github}
           </a>

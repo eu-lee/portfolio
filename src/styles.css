@@ -128,6 +128,92 @@ button {
    inline from the measured position of the links. */
 .frame-line.is-nav-down { top: 0; bottom: 0; width: 1px; }
 
+/* ---- Load-in choreography -------------------------------------------------
+   Staged once on first load: (1) the vertical wires draw top -> bottom, (2) the
+   horizontal wires draw left -> right to close the box, (3) the mosaic and the
+   text fade up together. Timings live as vars so the whole sequence is easy to
+   retune. The frame lines / canvas / text start hidden under `.is-intro` so
+   there's no flash of the finished frame before the grid resolves; the
+   animations (added with `.is-intro-ready`) use fill `both` to hold the hidden
+   from-state through their delay and the final state after. */
+.hero {
+  --intro-v: 0.4s; /* vertical wires draw down */
+  --intro-h: 0.38s; /* horizontal wires draw across */
+  --intro-v-delay: 0.05s;
+  --intro-h-delay: 0.42s; /* starts as the verticals finish */
+  --intro-fade: 0.5s;
+  --intro-fade-delay: 0.8s; /* mosaic, once the box is closed */
+  --intro-text-delay: 1.1s; /* text, once the mosaic is up */
+}
+
+@keyframes wire-draw-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes wire-draw-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes hero-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Initial hidden state (and the resting state until the grid resolves). */
+.hero.is-intro .frame-line.is-left,
+.hero.is-intro .frame-line.is-right,
+.hero.is-intro .frame-line.is-nav-down {
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+.hero.is-intro .frame-line.is-top,
+.hero.is-intro .frame-line.is-bottom {
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.hero.is-intro .brick-canvas,
+.hero.is-intro .hero-nav,
+.hero.is-intro .hero-content {
+  opacity: 0;
+}
+
+/* Grid resolved: play the sequence. */
+.hero.is-intro-ready .frame-line.is-left,
+.hero.is-intro-ready .frame-line.is-right,
+.hero.is-intro-ready .frame-line.is-nav-down {
+  animation: wire-draw-y var(--intro-v) ease-out var(--intro-v-delay) both;
+}
+
+.hero.is-intro-ready .frame-line.is-top,
+.hero.is-intro-ready .frame-line.is-bottom {
+  animation: wire-draw-x var(--intro-h) ease-out var(--intro-h-delay) both;
+}
+
+.hero.is-intro-ready .brick-canvas {
+  animation: hero-fade-in var(--intro-fade) ease-out var(--intro-fade-delay) both;
+}
+
+.hero.is-intro-ready .hero-nav,
+.hero.is-intro-ready .hero-content {
+  animation: hero-fade-in var(--intro-fade) ease-out var(--intro-text-delay) both;
+}
+
+/* Respect reduced-motion: show everything immediately, no draw-in. */
+@media (prefers-reduced-motion: reduce) {
+  .hero.is-intro .frame-line,
+  .hero.is-intro .brick-canvas,
+  .hero.is-intro .hero-nav,
+  .hero.is-intro .hero-content {
+    transform: none;
+    opacity: 1;
+    animation: none;
+  }
+}
+
 /* Header row at the top of the inner frame: location label left, section links
    right (over the darkened top of the vignette). */
 .hero-nav {
