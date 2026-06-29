@@ -77,9 +77,9 @@ export function studGrid(width, height, dpr = 1) {
 
 // Measure one element and resolve the grid once, so every consumer shares the
 // exact same { columns, rows, size }. Measuring two elements separately and
-// rounding each through studGrid's Math.round(w/14) is what let the canvas and
-// the nameplate land on different grids under browser zoom — a sub-pixel width
-// difference could flip `columns` for one layer but not the other.
+// rounding each through studGrid's Math.round(w/14) can let layers land on
+// different grids under browser zoom: a sub-pixel width difference could flip
+// `columns` for one layer but not the other.
 export function useStudGrid(ref) {
   const [grid, setGrid] = useState(null);
 
