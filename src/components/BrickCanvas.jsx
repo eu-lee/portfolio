@@ -137,11 +137,18 @@ function drawStud(ctx, x, y, size, color) {
 
 // Renders `src` as a wall of LEGO studs: the image is downsampled so each stud
 // covers one source region, and the stud is tinted with that region's average
-// color. Static (re-renders on grid / source change), since the input is a
-// fixed image rather than an animation. The grid ({ columns, rows, size, width,
-// height, dpr }) is measured once by the hero, sized to cover the viewport so
-// the wall bleeds off every edge.
-export function BrickCanvas({ src, grid, panStuds = 0 }) {
+// color. Static images render once; GIFs run a throttled redraw loop so the
+// sampled frame keeps advancing. The grid ({ columns, rows, size, width, height,
+// dpr }) is measured once by the hero, sized to cover the viewport so the wall
+// bleeds off every edge.
+export function BrickCanvas({
+  src,
+  grid,
+  panStuds = 0,
+  focalX = 0.5,
+  focalY = 0.5,
+  mediaDarken = 0
+}) {
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   // One detailed stud rendered per (quantized) tint, reused across the wall and
@@ -168,7 +175,9 @@ export function BrickCanvas({ src, grid, panStuds = 0 }) {
     };
   }, [src]);
 
-  // Redraw whenever the shared grid or the loaded image changes.
+  // Redraw whenever the shared grid or the loaded image changes. Animated GIFs
+  // need repeated draws because a canvas only stores the frame last painted into
+  // it; the GIF can keep advancing but the canvas will not update by itself.
   useEffect(() => {
     const image = imageRef.current;
     if (!grid || !loaded || !image || image.naturalWidth === 0) return;
@@ -205,18 +214,17 @@ export function BrickCanvas({ src, grid, panStuds = 0 }) {
     const sampler = document.createElement("canvas");
     const sctx = sampler.getContext("2d", { willReadFrequently: true });
 
-    // Downsample the source into a columns x rows buffer, cover-fitting it
-    // (center crop) so it matches a CSS `background-size: cover` framing. An
-    // optional `panStuds` slides the content right by that many studs (defaults
-    // to 0, i.e. centred).
+    // Downsample the source into a columns x rows buffer, cover-fitting it so it
+    // matches CSS `background-size: cover` framing. `focalX` / `focalY` choose
+    // which part of oversized media stays in frame; `panStuds` adds a small
+    // horizontal manual nudge when needed.
     sampler.width = columns;
     sampler.height = rows;
     const scale = Math.max(columns / image.naturalWidth, rows / image.naturalHeight);
     const dw = image.naturalWidth * scale;
     const dh = image.naturalHeight * scale;
-    sctx.clearRect(0, 0, columns, rows);
-    sctx.drawImage(image, (columns - dw) / 2 + panStuds, (rows - dh) / 2, dw, dh);
-    const pixels = sctx.getImageData(0, 0, columns, rows).data;
+    const clampedFocalX = Math.max(0, Math.min(1, focalX));
+    const clampedFocalY = Math.max(0, Math.min(1, focalY));
 
     // Rebuild the sprite cache only when the stud pixel size changes.
     const key = `${cell}`;
@@ -230,66 +238,139 @@ export function BrickCanvas({ src, grid, panStuds = 0 }) {
     // so it keeps the pixel character but the gradient grades within each stud and
     // dissolves the blocky row-steps continuously into the border (built below,
     // after the studs are drawn).
-    const EDGE_FADE = 4.5; // studs the top/bottom fade spans
-    const vSpan = Math.min(EDGE_FADE * cell, deviceHeight / 2);
+    const TOP_EDGE_FADE = 14; // studs the top fade spans
+    const BOTTOM_EDGE_FADE = 14; // bottom starts earlier and fades across more studs
+    const TOP_EDGE_MAX_ALPHA = 0.82;
+    const BOTTOM_EDGE_MAX_ALPHA = 1;
+    const TOP_EDGE_CURVE = 3.2; // higher keeps the edge darker and drops off faster
+    const BOTTOM_EDGE_CURVE = 0.5; // visible through more rows while still black at the bottom
+    const BOTTOM_SOLID_ROWS = 1;
+    const BOTTOM_NEAR_SOLID_ROWS = 1;
+    const BOTTOM_NEAR_SOLID_ALPHA = 0.95;
+    const vSpan = Math.min(Math.max(TOP_EDGE_FADE, BOTTOM_EDGE_FADE) * cell, deviceHeight / 2);
     const smooth = (t) => t * t * (3 - 2 * t);
+    const expFade = (t, maxAlpha, curve) => {
+      const clamped = Math.max(0, Math.min(1, t));
+      return ((Math.exp(curve * clamped) - 1) / (Math.exp(curve) - 1)) * maxAlpha;
+    };
     const pixelFade = (y) => {
-      const dist = Math.min(y + 0.5, rows - 0.5 - y); // studs to nearest v-edge
-      return smooth(Math.max(0, Math.min(1, 1 - (dist - 0.5) / EDGE_FADE)));
+      const topDist = y + 0.5;
+      const bottomRow = rows - 1 - y;
+      const topAlpha = expFade(1 - (topDist - 0.5) / TOP_EDGE_FADE, TOP_EDGE_MAX_ALPHA, TOP_EDGE_CURVE);
+      const bottomFixedRows = BOTTOM_SOLID_ROWS + BOTTOM_NEAR_SOLID_ROWS;
+      if (bottomRow < bottomFixedRows) return topAlpha;
+      const bottomDist = bottomRow - bottomFixedRows + 0.5;
+      const bottomAlpha = expFade(
+        1 - (bottomDist - 0.5) / BOTTOM_EDGE_FADE,
+        BOTTOM_EDGE_MAX_ALPHA,
+        BOTTOM_EDGE_CURVE
+      );
+      return Math.max(topAlpha, bottomAlpha);
     };
 
-    for (let y = 0; y < rows; y += 1) {
-      for (let x = 0; x < columns; x += 1) {
-        const i = (y * columns + x) * 4;
-        const hex = quantizeHex(pixels[i], pixels[i + 1], pixels[i + 2]);
-        const px = x * cell;
-        const py = y * cell;
-        ctx.drawImage(getSprite(hex), px, py, cell, cell);
-
-        const j = surfaceJitter(x, y);
-        ctx.globalAlpha = Math.abs(j) * 0.05;
-        ctx.fillStyle = j > 0 ? "#fff" : "#000";
-        ctx.fillRect(px, py, cell, cell);
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    // Top/bottom edge fade, built on its own layer so the gradient mask
-    // (destination-in) doesn't erase the wall: (1) paint the pixel fade as a flat
-    // black alpha per stud row, then (2) multiply it by a smooth gradient mask
-    // (opaque at the edges, transparent in the middle). The mask varies within
-    // each stud row, so it smooths the hard steps between rows while preserving
-    // the pixelated character, before compositing back over the studs.
-    if (vSpan > 0) {
-      const layer = document.createElement("canvas");
-      layer.width = deviceWidth;
-      layer.height = deviceHeight;
-      const lctx = layer.getContext("2d");
-
-      lctx.fillStyle = "#000";
-      for (let y = 0; y < rows; y += 1) {
-        const a = pixelFade(y);
-        if (a <= 0) continue;
-        lctx.globalAlpha = a;
-        lctx.fillRect(0, y * cell, deviceWidth, cell);
-      }
-      lctx.globalAlpha = 1;
-
-      const mask = lctx.createLinearGradient(0, 0, 0, deviceHeight);
+    const layer = document.createElement("canvas");
+    layer.width = deviceWidth;
+    layer.height = deviceHeight;
+    const lctx = layer.getContext("2d");
+    const mask = vSpan > 0 ? lctx.createLinearGradient(0, 0, 0, deviceHeight) : null;
+    if (mask) {
       const fr = vSpan / deviceHeight;
       for (let i = 0; i <= 8; i += 1) {
         const u = i / 8;
-        const a = smooth(1 - u); // 1 at the edge -> 0 inward
-        mask.addColorStop(u * fr, `rgba(0,0,0,${a})`);
-        mask.addColorStop(1 - u * fr, `rgba(0,0,0,${a})`);
+        mask.addColorStop(u * fr, `rgba(0,0,0,${expFade(1 - u, TOP_EDGE_MAX_ALPHA, TOP_EDGE_CURVE)})`);
+        mask.addColorStop(
+          1 - u * fr,
+          `rgba(0,0,0,${expFade(1 - u, BOTTOM_EDGE_MAX_ALPHA, BOTTOM_EDGE_CURVE)})`
+        );
       }
-      lctx.globalCompositeOperation = "destination-in";
-      lctx.fillStyle = mask;
-      lctx.fillRect(0, 0, deviceWidth, deviceHeight);
-
-      ctx.drawImage(layer, 0, 0);
     }
-  }, [grid, loaded, panStuds]);
+
+    const drawFrame = () => {
+      sctx.clearRect(0, 0, columns, rows);
+      sctx.drawImage(
+        image,
+        (columns - dw) * clampedFocalX + panStuds,
+        (rows - dh) * clampedFocalY,
+        dw,
+        dh
+      );
+      const pixels = sctx.getImageData(0, 0, columns, rows).data;
+      const darken = Math.max(0, Math.min(0.9, mediaDarken));
+      const darkenFactor = 1 - darken;
+
+      for (let y = 0; y < rows; y += 1) {
+        for (let x = 0; x < columns; x += 1) {
+          const i = (y * columns + x) * 4;
+          const hex = quantizeHex(
+            pixels[i] * darkenFactor,
+            pixels[i + 1] * darkenFactor,
+            pixels[i + 2] * darkenFactor
+          );
+          const px = x * cell;
+          const py = y * cell;
+          ctx.drawImage(getSprite(hex), px, py, cell, cell);
+
+          const j = surfaceJitter(x, y);
+          ctx.globalAlpha = Math.abs(j) * 0.05;
+          ctx.fillStyle = j > 0 ? "#fff" : "#000";
+          ctx.fillRect(px, py, cell, cell);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // Top/bottom edge fade, built on its own layer so the gradient mask
+      // (destination-in) doesn't erase the wall: (1) paint the pixel fade as a
+      // flat black alpha per stud row, then (2) multiply it by a smooth gradient
+      // mask before compositing back over the studs.
+      if (mask) {
+        lctx.globalCompositeOperation = "source-over";
+        lctx.clearRect(0, 0, deviceWidth, deviceHeight);
+        lctx.fillStyle = "#000";
+        for (let y = 0; y < rows; y += 1) {
+          const a = pixelFade(y);
+          if (a <= 0) continue;
+          lctx.globalAlpha = a;
+          lctx.fillRect(0, y * cell, deviceWidth, cell);
+        }
+        lctx.globalAlpha = 1;
+        lctx.globalCompositeOperation = "destination-in";
+        lctx.fillStyle = mask;
+        lctx.fillRect(0, 0, deviceWidth, deviceHeight);
+        ctx.drawImage(layer, 0, 0);
+      }
+
+      ctx.fillStyle = "#000";
+      ctx.globalAlpha = BOTTOM_NEAR_SOLID_ALPHA;
+      ctx.fillRect(0, deviceHeight - (BOTTOM_SOLID_ROWS + BOTTOM_NEAR_SOLID_ROWS) * cell, deviceWidth, BOTTOM_NEAR_SOLID_ROWS * cell);
+      ctx.globalAlpha = 1;
+      ctx.fillRect(0, deviceHeight - BOTTOM_SOLID_ROWS * cell, deviceWidth, BOTTOM_SOLID_ROWS * cell);
+    };
+
+    const isGif = /\.gif(?:$|[?#])/i.test(src);
+    const frameMs = 1000 / 12;
+    let animationFrame = 0;
+    let lastDraw = 0;
+    let stopped = false;
+
+    const tick = (time) => {
+      if (stopped) return;
+      if (time - lastDraw >= frameMs) {
+        drawFrame();
+        lastDraw = time;
+      }
+      animationFrame = requestAnimationFrame(tick);
+    };
+
+    drawFrame();
+    if (isGif) {
+      animationFrame = requestAnimationFrame(tick);
+    }
+
+    return () => {
+      stopped = true;
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    };
+  }, [grid, loaded, src, panStuds, focalX, focalY, mediaDarken]);
 
   // Position the fitted wall in CSS px and centre it; the leftover ring is the
   // border frame. (The canvas backing store is sized in device px above.)

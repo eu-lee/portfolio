@@ -4,7 +4,7 @@ import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
 import { ProjectCard } from "./components/ProjectCard.jsx";
 import { useStudGrid } from "./lib/heroGrid.js";
-import heroBackground from "./assets/backgrounds/bkg.jpg";
+import heroBackground from "./assets/backgrounds/bkg2.gif";
 
 function navigateTo(path) {
   window.history.pushState({}, "", path);
@@ -94,7 +94,7 @@ function Hero() {
 
   return (
     <section className="hero" ref={heroRef} style={frameVars}>
-      <BrickCanvas src={heroBackground} grid={grid} />
+      <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} />
 
       {/* White wire box on the inner frame edges, extending out across the black
           border to the screen edges. The is-nav-down wire drops from the top just
