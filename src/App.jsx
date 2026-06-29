@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { filters, projects } from "./data/projects.js";
 import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
@@ -38,7 +38,6 @@ const ICONS = {
 
 function Hero() {
   const heroRef = useRef(null);
-  const linksRef = useRef(null);
   const grid = useStudGrid(heroRef);
 
   // Load-in choreography: once the grid has resolved (so the wires land on their
@@ -52,41 +51,6 @@ function Hero() {
     introPlayedRef.current = true;
     const id = requestAnimationFrame(() => setIntroReady(true));
     return () => cancelAnimationFrame(id);
-  }, [grid]);
-
-  // The nav links are right-aligned, so their left edge depends on the text
-  // width (and the font once it loads). Measure it so the links can be centered
-  // within the header's right cell.
-  const [navShiftX, setNavShiftX] = useState(0);
-  useLayoutEffect(() => {
-    const measure = () => {
-      const links = linksRef.current;
-      const hero = heroRef.current;
-      if (!links || !hero) return;
-      const linksLeft = links.offsetLeft;
-      const linksRight = links.offsetLeft + links.offsetWidth;
-      // Start with a balanced text-based position, then snap it to the seam on
-      // the left edge of that stud so the divider doesn't cut through a brick.
-      // Bias the wire one stud further left so it isn't cramped against "home".
-      const gap = grid?.frame ? grid.frame.rightPx - linksRight : 16;
-      const extra = grid?.size ?? 0;
-      const targetX = linksLeft - gap - extra;
-      if (grid?.frame && grid.size) {
-        const seamIndex = Math.floor((targetX - grid.frame.leftPx) / grid.size);
-        const wireX = grid.frame.leftPx + seamIndex * grid.size;
-        const leftGap = linksLeft - wireX;
-        const rightGap = grid.frame.rightPx - linksRight;
-        setNavShiftX(Math.round((rightGap - leftGap) / 2));
-      } else {
-        setNavShiftX(0);
-      }
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    if (linksRef.current) observer.observe(linksRef.current);
-    if (heroRef.current) observer.observe(heroRef.current);
-    document.fonts?.ready.then(measure);
-    return () => observer.disconnect();
   }, [grid]);
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
@@ -133,7 +97,7 @@ function Hero() {
 
       {/* Top strip: section links on the right. */}
       <header className="hero-nav">
-        <nav className="hero-links" ref={linksRef} style={{ transform: `translateX(${navShiftX}px)` }}>
+        <nav className="hero-links">
           <a
             href="/"
             className="is-active"
