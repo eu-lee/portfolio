@@ -183,11 +183,11 @@ function Hero() {
       <div className="hero-content">
         <h1 className="hero-name">Eugene Lee</h1>
         <p className="hero-tagline">
-          I'm a Software Engineering student at the University of Waterloo with an interest for hard problems and algorithms. My current work at Eureka DevSecOps revolves around building agents for automated code vulnerability remediation.
+          I study Software Engineering at the University of Waterloo. I'm interested in hard problems and algorithms. My current work at Eureka DevSecOps revolves around building agents for automated code vulnerability remediation.
         </p>
         <div className="hero-socials">
 
-          Feel free to contact me through:
+          Feel free to connect with me through:
           <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
             {ICONS.github}
           </a>

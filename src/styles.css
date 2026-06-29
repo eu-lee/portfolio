@@ -116,7 +116,8 @@ button {
 
 .frame-line {
   position: absolute;
-  background: #fff;
+  /* Wireframe color. Gray reads softer over the mosaic than pure white. */
+  background: #8b9296;
 }
 
 /* Extension layer: full-bleed lines running edge to edge (across the black

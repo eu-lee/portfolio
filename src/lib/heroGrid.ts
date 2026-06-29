@@ -53,8 +53,13 @@ export function studGrid(width: number, height: number, dpr = 1): StudGrid {
   // The image is bounded to an inner frame, inset insetStuds from every screen
   // edge. The surrounding border is solid black and the studs fade to black at
   // the frame edges; the wire box sits on those edges. Inset in whole studs so
-  // the wires land on stud lines.
-  const insetStuds = Math.max(1, Math.round(Math.max(20, Math.min(56, w * 0.03)) / size));
+  // the wires land on stud lines. FRAME_INSET_TRIM widens the frame by shaving
+  // that many studs off the inset on every side.
+  const FRAME_INSET_TRIM = 1;
+  const insetStuds = Math.max(
+    1,
+    Math.round(Math.max(20, Math.min(56, w * 0.03)) / size) - FRAME_INSET_TRIM
+  );
   const columns = Math.max(1, fitCols - insetStuds * 2);
   const rows = Math.max(1, fitRows - insetStuds * 2);
 
