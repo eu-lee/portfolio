@@ -196,9 +196,8 @@ button {
 }
 
 .hero-tagline {
-  /* Bottom margin matches the content's padding-bottom (--nav-pad) so the socials
-     row sits centered between the tagline and the bottom wire. */
-  margin: clamp(14px, 1.7vw, 22px) 0 var(--nav-pad);
+  --hero-stack-gap: clamp(14px, 1.7vw, 22px);
+  margin: var(--hero-stack-gap) 0;
   max-width: 48ch;
   font-size: clamp(15px, 1.5vw, 19px);
   line-height: 1.42;
