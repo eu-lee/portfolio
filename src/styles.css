@@ -49,153 +49,168 @@ button {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
-  /* The wall is fitted to a whole number of studs and centred, so a thin ring of
-     the hero shows around it as a border. */
-  background: var(--dark);
+  /* Black border around the inner frame (and fallback behind the pixels). */
+  background: #000;
+  color: #f3f5fa;
+  /* Wire-box line positions (css px from the hero's top-left) + the matching
+     edge insets, set inline from the stud grid so the box lands on whole studs.
+     These fallbacks only apply for the first paint before the grid resolves. */
+  --wire-top: 48px;
+  --wire-bottom: calc(100% - 48px);
+  --wire-left: 48px;
+  --wire-right: calc(100% - 48px);
+  --wire-right-inset: 48px;
+  --wire-bottom-inset: 48px;
+  /* Height of the header row at the top of the inner frame, and the equal inset
+     each header item keeps from the top wire and its nearest side wire. */
+  --nav-band: clamp(40px, 5vh, 58px);
+  --nav-pad: clamp(15px, 1.5vw, 20px);
   /* Lock native pinch-zoom and pan gestures that start on the hero. */
   touch-action: none;
   overscroll-behavior: none;
 }
 
+/* Full-bleed pixel wall: left/top/width/height are set inline from the shared
+   grid (sized to cover the viewport and centred, so it bleeds off every edge). */
 .brick-canvas {
   position: absolute;
-  /* left/top/width/height are set inline from the shared grid (centred fit). */
+  z-index: 1;
 }
 
-/* White wires that run the full width/height of the hero and meet at the four
-   corners of the brick wall, splitting the screen into a 3x3 grid with the wall
-   in the centre cell. Positioned inline from the shared grid; non-interactive so
-   they never swallow clicks meant for the nameplate. */
+/* Thin white wire box inset from the screen edges; each line runs the full
+   width/height so they read as a framing grid laid over the pixels. */
 .hero-frame {
   position: absolute;
   inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
 .frame-line {
   position: absolute;
-  /* White wires so the 3x3 grid stays visible on the dark frame. */
-  background: var(--white);
+  background: #fff;
 }
 
-.frame-line.is-vertical {
-  top: 0;
-  height: 100%;
-  width: 1px;
-}
+.frame-line.is-top { top: var(--wire-top); left: 0; right: 0; height: 1px; }
+.frame-line.is-bottom { top: var(--wire-bottom); left: 0; right: 0; height: 1px; }
+.frame-line.is-left { top: 0; bottom: 0; left: var(--wire-left); width: 1px; }
+.frame-line.is-right { top: 0; bottom: 0; left: var(--wire-right); width: 1px; }
 
-.frame-line.is-horizontal {
-  left: 0;
-  width: 100%;
-  height: 1px;
-}
+/* Vertical wire dropping from the top just left of the nav links; `left` is set
+   inline from the measured position of the links. */
+.frame-line.is-nav-down { top: 0; bottom: 0; width: 1px; }
 
-/* Tiled LEGO nameplate: a grid of flat tiles paved edge-to-edge. Seams are
-   drawn per tile (light top-left edge, dark bottom-right groove) the same way
-   the stud field shades its base plates, rather than via a grid gap. Tiles, the
-   Projects button, and the text overlay all sit on the same 20x10 grid. */
-.nameplate {
+/* Header row at the top of the inner frame: location label left, section links
+   right (over the darkened top of the vignette). */
+.hero-nav {
   position: absolute;
-  /* left / top / width / height are set inline so the plate snaps onto an exact
-     20x10 block of the stud grid behind it. */
-  display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  grid-template-rows: repeat(10, 1fr);
-  background: #d8c79d;
-}
-
-/* Flat tile: one uniform white. The seam is a fixed 1px directional edge —
-   light catch top/left, dark groove bottom/right — drawn with inset shadows so
-   it stays identical on every tile regardless of footprint (no tile-spanning
-   gradient that would make larger plates look more 3D). */
-.tile {
-  background: #f1e6c8;
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, .5),
-    inset -1px -1px 0 rgba(0, 0, 0, .24);
-  pointer-events: none;
-}
-
-/* Buttons are just colored plates, flush and at the same level as the base
-   tiles: identical flat seam, only the color (and text/icon) differs. bg + ink
-   come in per button via CSS vars. */
-.tile-button {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  color: var(--btn-ink);
-  background: var(--btn-bg);
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, .5),
-    inset -1px -1px 0 rgba(0, 0, 0, .24);
-  cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(8px, 1.15vw, 12px);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: box-shadow .18s ease;
-}
-
-.tile-button-icon svg {
-  width: 54%;
-  height: 54%;
-  display: block;
-}
-
-/* Lighten on hover with a translucent inset wash (not filter/transform, which
-   would re-layer the sub-pixel-positioned plate and cause a 1px jitter). */
-.tile-button:hover,
-.tile-button:focus-visible {
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, .5),
-    inset -1px -1px 0 rgba(0, 0, 0, .24),
-    inset 0 0 0 100px rgba(255, 255, 255, .14);
-}
-
-/* The cream icon plates are already near-white, so they need a much stronger
-   wash to read as lighting up. */
-.tile-button-icon:hover,
-.tile-button-icon:focus-visible {
-  box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, .5),
-    inset -1px -1px 0 rgba(0, 0, 0, .24),
-    inset 0 0 0 100px rgba(255, 255, 255, .55);
-}
-
-/* Text printed over the tiled surface. */
-.nameplate-text {
-  grid-area: 1 / 1 / -1 / -1;
+  top: var(--wire-top);
+  left: 0;
+  right: 0;
   z-index: 3;
-  align-self: start;
-  /* Pad in by exactly one stud, so the text can reach to 1 stud from the plate's
-     top and side edges. --stud is the live stud size, set inline on .nameplate. */
-  padding: var(--stud);
-  pointer-events: none;
-}
-
-.nameplate-text h1 {
-  /* Sized in stud units (--stud is the live stud size) so the heading scales
-     with the nameplate at every resolution instead of with the viewport. Kept
-     small enough that heading + paragraph fit above the button row (the text
-     budget is ~6 studs tall) rather than spilling over the buttons. */
-  margin-bottom: calc(var(--stud) * 0.45);
-  font-size: calc(var(--stud) * 1.9);
-  /* line-height 1 (not <1) so the glyphs don't bleed above their line box and
-     the name reads as a clean 1 stud below the plate's top padding. */
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: var(--nav-band);
+  /* Equal inset from the top wire and from the side wires, so each item sits the
+     same distance from the top as from its nearest side. */
+  padding:
+    var(--nav-pad)
+    calc(var(--wire-right-inset) + var(--nav-pad))
+    0
+    calc(var(--wire-left) + var(--nav-pad));
+  font-family: "IBM Plex Mono", monospace;
+  font-size: clamp(11px, 1.05vw, 13px);
   line-height: 1;
-  color: var(--ink);
+  letter-spacing: .14em;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
 }
 
-.nameplate-text p {
+.hero-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, .8);
+}
+
+.hero-loc svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hero-links {
+  display: flex;
+  gap: clamp(18px, 2.4vw, 34px);
+}
+
+.hero-links a {
+  color: rgba(255, 255, 255, .6);
+  transition: color .18s ease;
+}
+
+.hero-links a:hover,
+.hero-links a.is-active {
+  color: #fff;
+}
+
+/* Name block anchored to the bottom-left corner of the wire box, nudged a touch
+   inside the lines. */
+.hero-content {
+  position: absolute;
+  left: var(--wire-left);
+  bottom: var(--wire-bottom-inset);
+  z-index: 3;
+  /* Reach most of the way across the frame so the name + tagline have room. */
+  max-width: calc(var(--wire-right) - var(--wire-left));
+  /* Same inset as the header (--nav-pad) so the name / tagline / socials line up
+     with the location pin at the top-left, and the bottom-left corner matches. */
+  padding: 0 var(--nav-pad) var(--nav-pad);
+}
+
+.hero-name {
   margin: 0;
-  /* No max-width: let the text fill the padded plate and wrap right at the
-     1-stud padding edge instead of stopping short. Sized in stud units so it
-     scales with the plate. */
-  font-size: calc(var(--stud) * 0.7);
-  line-height: 1.4;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(48px, 9vw, 108px);
+  letter-spacing: 0;
+  word-spacing: -.12em;
+  line-height: .88;
+  /* Keep the name on a single line. */
+  white-space: nowrap;
+  color: #f4f6fb;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, .5);
+}
+
+.hero-tagline {
+  margin: clamp(14px, 1.7vw, 22px) 0 clamp(20px, 2.2vw, 30px);
+  max-width: 48ch;
+  font-size: clamp(15px, 1.5vw, 19px);
+  line-height: 1.42;
+  color: #c6cfdb;
+  text-shadow: 0 1px 16px rgba(0, 0, 0, .5);
+}
+
+.hero-socials {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.4vw, 18px);
+}
+
+.hero-socials a {
+  display: inline-flex;
+  color: rgba(255, 255, 255, .82);
+  transition: color .18s ease, transform .18s ease;
+}
+
+.hero-socials a:hover {
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.hero-socials svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .eyebrow {
@@ -232,36 +247,10 @@ h3 {
   font-size: 22px;
 }
 
-.hero-panel p:not(.eyebrow) {
-  max-width: 34ch;
-  color: #42463F;
-  font-size: 16px;
-  line-height: 1.52;
-}
-
-.hero-nav,
 .filter-group {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-.hero-nav {
-  gap: 22px;
-  margin: 0 0 22px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
-}
-
-.hero-nav a {
-  border-bottom: 2px solid transparent;
-  padding-bottom: 4px;
-  color: #56605A;
-}
-
-.hero-nav a:hover {
-  border-color: var(--red);
-  color: var(--ink);
 }
 
 .stud {
@@ -620,8 +609,8 @@ h3 {
 }
 
 @media (max-width: 720px) {
-  .hero-nav {
-    gap: 14px;
+  .hero-links {
+    gap: 18px;
   }
 
   .section-heading {

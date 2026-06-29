@@ -139,9 +139,9 @@ function drawStud(ctx, x, y, size, color) {
 // covers one source region, and the stud is tinted with that region's average
 // color. Static (re-renders on grid / source change), since the input is a
 // fixed image rather than an animation. The grid ({ columns, rows, size, width,
-// height, dpr }) is measured once by the hero and shared with the nameplate so
-// the two layers stay locked together at every zoom level.
-export function BrickCanvas({ src, grid }) {
+// height, dpr }) is measured once by the hero, sized to cover the viewport so
+// the wall bleeds off every edge.
+export function BrickCanvas({ src, grid, panStuds = 0 }) {
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   // One detailed stud rendered per (quantized) tint, reused across the wall and
@@ -206,14 +206,16 @@ export function BrickCanvas({ src, grid }) {
     const sctx = sampler.getContext("2d", { willReadFrequently: true });
 
     // Downsample the source into a columns x rows buffer, cover-fitting it
-    // (center crop) so it matches a CSS `background-size: cover` framing.
+    // (center crop) so it matches a CSS `background-size: cover` framing. An
+    // optional `panStuds` slides the content right by that many studs (defaults
+    // to 0, i.e. centred).
     sampler.width = columns;
     sampler.height = rows;
     const scale = Math.max(columns / image.naturalWidth, rows / image.naturalHeight);
     const dw = image.naturalWidth * scale;
     const dh = image.naturalHeight * scale;
     sctx.clearRect(0, 0, columns, rows);
-    sctx.drawImage(image, (columns - dw) / 2, (rows - dh) / 2, dw, dh);
+    sctx.drawImage(image, (columns - dw) / 2 + panStuds, (rows - dh) / 2, dw, dh);
     const pixels = sctx.getImageData(0, 0, columns, rows).data;
 
     // Rebuild the sprite cache only when the stud pixel size changes.
@@ -221,6 +223,20 @@ export function BrickCanvas({ src, grid }) {
     if (key !== spriteRef.current.key) {
       spriteRef.current = { cache: new Map(), key };
     }
+
+    // The image is bounded to the inner frame and fades to black at its top and
+    // bottom edges, with a black border around it. The fade is a per-stud (pixel)
+    // black wash — each stud row darkens a step — *masked* by a smooth gradient,
+    // so it keeps the pixel character but the gradient grades within each stud and
+    // dissolves the blocky row-steps continuously into the border (built below,
+    // after the studs are drawn).
+    const EDGE_FADE = 4.5; // studs the top/bottom fade spans
+    const vSpan = Math.min(EDGE_FADE * cell, deviceHeight / 2);
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const pixelFade = (y) => {
+      const dist = Math.min(y + 0.5, rows - 0.5 - y); // studs to nearest v-edge
+      return smooth(Math.max(0, Math.min(1, 1 - (dist - 0.5) / EDGE_FADE)));
+    };
 
     for (let y = 0; y < rows; y += 1) {
       for (let x = 0; x < columns; x += 1) {
@@ -237,7 +253,43 @@ export function BrickCanvas({ src, grid }) {
         ctx.globalAlpha = 1;
       }
     }
-  }, [grid, loaded]);
+
+    // Top/bottom edge fade, built on its own layer so the gradient mask
+    // (destination-in) doesn't erase the wall: (1) paint the pixel fade as a flat
+    // black alpha per stud row, then (2) multiply it by a smooth gradient mask
+    // (opaque at the edges, transparent in the middle). The mask varies within
+    // each stud row, so it smooths the hard steps between rows while preserving
+    // the pixelated character, before compositing back over the studs.
+    if (vSpan > 0) {
+      const layer = document.createElement("canvas");
+      layer.width = deviceWidth;
+      layer.height = deviceHeight;
+      const lctx = layer.getContext("2d");
+
+      lctx.fillStyle = "#000";
+      for (let y = 0; y < rows; y += 1) {
+        const a = pixelFade(y);
+        if (a <= 0) continue;
+        lctx.globalAlpha = a;
+        lctx.fillRect(0, y * cell, deviceWidth, cell);
+      }
+      lctx.globalAlpha = 1;
+
+      const mask = lctx.createLinearGradient(0, 0, 0, deviceHeight);
+      const fr = vSpan / deviceHeight;
+      for (let i = 0; i <= 8; i += 1) {
+        const u = i / 8;
+        const a = smooth(1 - u); // 1 at the edge -> 0 inward
+        mask.addColorStop(u * fr, `rgba(0,0,0,${a})`);
+        mask.addColorStop(1 - u * fr, `rgba(0,0,0,${a})`);
+      }
+      lctx.globalCompositeOperation = "destination-in";
+      lctx.fillStyle = mask;
+      lctx.fillRect(0, 0, deviceWidth, deviceHeight);
+
+      ctx.drawImage(layer, 0, 0);
+    }
+  }, [grid, loaded, panStuds]);
 
   // Position the fitted wall in CSS px and centre it; the leftover ring is the
   // border frame. (The canvas backing store is sized in device px above.)

@@ -5,9 +5,15 @@ import { useMemo } from "react";
 // tiles drawn from the footprint set below. Each tile is shaded and seamed like
 // a stud base plate (light top-left catch, dark bottom-right groove), just
 // without the raised stud on top.
+//
+// The plate is a fixed COLS wide and spans the *full height of the wall* — it is
+// snapped onto the leftmost COLS columns of the shared stud grid, top edge flush
+// with the wall's top and bottom edge flush with its bottom. Its row count is
+// therefore the grid's row count, resolved per render.
 
-const COLS = 20;
-const ROWS = 10;
+// Exported so the hero can place a divider wire at the plate's right edge and
+// pan the photo out from under it; this is the shared width contract.
+export const NAMEPLATE_COLS = 20;
 
 // Footprints grouped by priority (w = columns, h = rows). At each open cell the
 // packer tries 2x4 first to maximize those, then 1x4, then 1x2, then 1x1 to
@@ -23,17 +29,6 @@ const PIECE_GROUPS = [
 // Every plate is the same white; its color, shading, and seams are all defined
 // in CSS (.tile), kept uniform so a 2x4 slab reads identically to a 1x1.
 
-// A left-aligned row of colored "plate" buttons along the bottom: a wide text
-// plate for Projects, then square 2x2 icon plates for GitHub and LinkedIn. The
-// packer reserves these footprints and fills the rest around them.
-// Buttons are 2 studs tall; place them so just 1 stud of tiles sits below.
-const BUTTON_ROW = ROWS - 3;
-const BUTTONS = [
-  { id: "projects", label: "Projects", href: "/projects", internal: true, bg: "var(--azure)", ink: "#08263c", r: BUTTON_ROW, c: 1, w: 6, h: 2 },
-  { id: "github", label: "GitHub", icon: "github", href: "#", bg: "#f1e6c8", ink: "#1b2530", r: BUTTON_ROW, c: 8, w: 2, h: 2 },
-  { id: "linkedin", label: "LinkedIn", icon: "linkedin", href: "#", bg: "#f1e6c8", ink: "#1e5aa8", r: BUTTON_ROW, c: 11, w: 2, h: 2 }
-];
-
 // Inline brand glyphs for the icon plates.
 const ICONS = {
   github: (
@@ -48,10 +43,19 @@ const ICONS = {
   )
 };
 
-// Cells of clearance from the wall's left/bottom edges when snapping the plate.
-// 0 => the plate's bottom-left sits flush in the wall's bottom-left corner, right
-// where the white wireframe lines meet.
-const MARGIN = 0;
+// A left-aligned row of colored "plate" buttons along the bottom: a wide text
+// plate for Projects, then square 2x2 icon plates for GitHub and LinkedIn. The
+// packer reserves these footprints and fills the rest around them. Buttons are 2
+// studs tall and pinned to the plate's bottom (one stud of tiles sits below),
+// regardless of how tall the plate grows.
+function buildButtons(rows) {
+  const buttonRow = Math.max(0, rows - 3);
+  return [
+    { id: "projects", label: "Projects", href: "/projects", internal: true, bg: "var(--azure)", ink: "#08263c", r: buttonRow, c: 1, w: 6, h: 2 },
+    { id: "github", label: "GitHub", icon: "github", href: "#", bg: "#f1e6c8", ink: "#1b2530", r: buttonRow, c: 8, w: 2, h: 2 },
+    { id: "linkedin", label: "LinkedIn", icon: "linkedin", href: "#", bg: "#f1e6c8", ink: "#1e5aa8", r: buttonRow, c: 11, w: 2, h: 2 }
+  ];
+}
 
 // Small deterministic PRNG so the layout is stable across renders.
 function mulberry32(seed) {
@@ -65,11 +69,11 @@ function mulberry32(seed) {
   };
 }
 
-function canPlace(occupied, r, c, footprint) {
-  if (c + footprint.w > COLS || r + footprint.h > ROWS) return false;
+function canPlace(occupied, r, c, footprint, rows) {
+  if (c + footprint.w > NAMEPLATE_COLS || r + footprint.h > rows) return false;
   for (let dr = 0; dr < footprint.h; dr += 1) {
     for (let dc = 0; dc < footprint.w; dc += 1) {
-      if (occupied[(r + dr) * COLS + (c + dc)]) return false;
+      if (occupied[(r + dr) * NAMEPLATE_COLS + (c + dc)]) return false;
     }
   }
   return true;
@@ -77,25 +81,26 @@ function canPlace(occupied, r, c, footprint) {
 
 // Greedy by priority: place the first piece that fits, biggest group first, so
 // 2x4s are maximized before falling back to smaller plates.
-function chooseFootprint(occupied, r, c, rng) {
+function chooseFootprint(occupied, r, c, rng, rows) {
   for (const group of PIECE_GROUPS) {
     const ordered = group.length > 1 && rng() < 0.5 ? [group[1], group[0]] : group;
     for (const footprint of ordered) {
-      if (canPlace(occupied, r, c, footprint)) return footprint;
+      if (canPlace(occupied, r, c, footprint, rows)) return footprint;
     }
   }
   return { w: 1, h: 1 };
 }
 
-function buildPlate() {
-  const occupied = new Uint8Array(COLS * ROWS);
+function buildPlate(rows) {
+  const buttons = buildButtons(rows);
+  const occupied = new Uint8Array(NAMEPLATE_COLS * rows);
   const tiles = [];
   const mark = (r, c) => {
-    occupied[r * COLS + c] = 1;
+    occupied[r * NAMEPLATE_COLS + c] = 1;
   };
 
   // Reserve every button footprint so the packer fills around them.
-  for (const button of BUTTONS) {
+  for (const button of buttons) {
     for (let dr = 0; dr < button.h; dr += 1) {
       for (let dc = 0; dc < button.w; dc += 1) mark(button.r + dr, button.c + dc);
     }
@@ -103,10 +108,10 @@ function buildPlate() {
 
   // Pave the whole grid, always filling the top-left-most open cell.
   const rng = mulberry32(0x1234abcd);
-  for (let r = 0; r < ROWS; r += 1) {
-    for (let c = 0; c < COLS; c += 1) {
-      if (occupied[r * COLS + c]) continue;
-      const footprint = chooseFootprint(occupied, r, c, rng);
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < NAMEPLATE_COLS; c += 1) {
+      if (occupied[r * NAMEPLATE_COLS + c]) continue;
+      const footprint = chooseFootprint(occupied, r, c, rng, rows);
       for (let dr = 0; dr < footprint.h; dr += 1) {
         for (let dc = 0; dc < footprint.w; dc += 1) mark(r + dr, c + dc);
       }
@@ -114,33 +119,32 @@ function buildPlate() {
     }
   }
 
-  return tiles;
+  return { tiles, buttons };
 }
 
 const area = (tile) => `${tile.r + 1} / ${tile.c + 1} / span ${tile.h} / span ${tile.w}`;
 
 export function Nameplate({ grid, onNavigate }) {
-  const tiles = useMemo(buildPlate, []);
+  // The plate spans the full height of the wall, so its row count tracks the
+  // shared grid. Re-pack only when the row count actually changes.
+  const rows = grid ? grid.rows : 0;
+  const { tiles, buttons } = useMemo(() => buildPlate(rows), [rows]);
 
-  // Snap the plate onto a COLS x ROWS block of the shared stud grid: same cell
-  // size, top-left on an exact cell boundary, anchored near bottom-left. The
-  // grid is measured once by the hero and handed to both layers, so the plate
-  // sits on the identical cells the canvas drew.
+  // Snap the plate onto a COLS x rows block of the shared stud grid: same cell
+  // size, top-left flush with the wall's top-left corner, spanning to the wall's
+  // bottom. The grid is measured once by the hero and handed to both layers, so
+  // the plate sits on the identical cells the canvas drew.
   const box = useMemo(() => {
     if (!grid) return null;
-    const { columns, rows, size, offsetX, offsetY } = grid;
-    const col = Math.max(0, Math.min(MARGIN, columns - COLS));
-    const row = Math.max(0, rows - ROWS - MARGIN);
-    // Offset by the same border inset the canvas uses, so the plate stays snapped
-    // to the exact studs the wall drew.
+    const { size, offsetX, offsetY } = grid;
     return {
-      left: offsetX + col * size,
-      top: offsetY + row * size,
-      width: COLS * size,
-      height: ROWS * size,
+      left: offsetX,
+      top: offsetY,
+      width: NAMEPLATE_COLS * size,
+      height: rows * size,
       stud: size
     };
-  }, [grid]);
+  }, [grid, rows]);
 
   return (
     <div
@@ -152,6 +156,7 @@ export function Nameplate({ grid, onNavigate }) {
               top: `${box.top}px`,
               width: `${box.width}px`,
               height: `${box.height}px`,
+              gridTemplateRows: `repeat(${rows}, 1fr)`,
               // One stud, exposed so the text can pad in by exactly a stud.
               "--stud": `${box.stud}px`
             }
@@ -167,7 +172,7 @@ export function Nameplate({ grid, onNavigate }) {
         />
       ))}
 
-      {BUTTONS.map((button) => (
+      {buttons.map((button) => (
         <a
           key={button.id}
           className={`tile-button${button.icon ? " tile-button-icon" : ""}`}

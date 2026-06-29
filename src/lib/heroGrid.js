@@ -1,64 +1,77 @@
 import { useLayoutEffect, useState } from "react";
 
-// Studs of clearance between the wall and each screen edge. The leftover sub-stud
-// remainder is added on top, so the frame both fits perfectly and sits this many
-// studs in from every side. Must be a multiple of 0.5 so the total studs removed
-// (INSET_STUDS * 2) stays whole and the cells stay integer.
-const INSET_STUDS = 1.5;
-
 // Single source of truth for the hero stud grid. BrickCanvas renders the studs
-// on this grid, and Nameplate snaps its tile plate onto the exact same cells —
-// both must derive their layout from here so they stay aligned.
+// on this grid. The wire box and the overlaid text are positioned in CSS
+// (independent of the studs), so the grid's only job now is to pave the pixels.
 //
 // Everything is resolved in *device* pixels and the stud is an integer number of
 // them. A whole-pixel stud means every stud lands on an exact device-pixel
 // boundary and tiles edge-to-edge with its neighbour — no sub-pixel seam for the
-// azure background to bleed through, and no resampling blur. The few device
-// pixels left over (width/height that don't divide evenly into whole studs) are
-// reported as offsetX/offsetY so the wall can be centred, leaving a thin uniform
-// border that absorbs the remainder and reframes itself at every size / DPR.
+// background to bleed through, and no resampling blur.
+//
+// The wall is sized to *cover* the viewport (rounded up to whole studs) and
+// centred, so it bleeds off all four screen edges instead of sitting inside a
+// border. The sub-stud overflow is clipped by the hero's overflow:hidden.
 export function studGrid(width, height, dpr = 1) {
   const w = Math.max(1, Math.round(width));
   const h = Math.max(1, Math.round(height));
   const deviceW = Math.round(w * dpr);
   const deviceH = Math.round(h * dpr);
 
-  // Target stud count sets the stud *size* (the cap keeps studs from shrinking —
-  // and the nameplate from ballooning — on very wide screens). Round it to whole
-  // device pixels, then fit as many whole studs as the area actually holds.
+  // Target stud count sets the stud *size* (the cap keeps studs from shrinking
+  // on very wide screens). Round it to whole device pixels, then fit as many
+  // whole studs as the area holds.
   const targetCols = Math.max(40, Math.min(112, Math.round(w / 14)));
   const cell = Math.max(1, Math.round(deviceW / targetCols));
   const fitCols = Math.max(1, Math.floor(deviceW / cell));
   const fitRows = Math.max(1, Math.floor(deviceH / cell));
 
-  // Pull the wall in by INSET_STUDS whole studs on every side. Combined with the
-  // centred sub-stud remainder, each border ends up exactly INSET_STUDS*cell + x
-  // wide (x = the leftover before the next full stud) — a clean, even frame whose
-  // edges land on whole device pixels so the white wires stay crisp.
-  const columns = Math.max(1, fitCols - INSET_STUDS * 2);
-  const rows = Math.max(1, fitRows - INSET_STUDS * 2);
+  const size = cell / dpr; // css px per stud
+
+  // The image is bounded to an inner frame, inset insetStuds from every screen
+  // edge. The surrounding border is solid black and the studs fade to black at
+  // the frame edges; the wire box sits on those edges. Inset in whole studs so
+  // the wires land on stud lines.
+  const insetStuds = Math.max(1, Math.round(Math.max(20, Math.min(56, w * 0.03)) / size));
+  const columns = Math.max(1, fitCols - insetStuds * 2);
+  const rows = Math.max(1, fitRows - insetStuds * 2);
 
   const deviceWidth = columns * cell;
   const deviceHeight = rows * cell;
 
-  // Snap the centring offset to a whole device pixel too, so the canvas's own
-  // top-left doesn't land on a fractional device pixel (which would let the
-  // browser resample the whole layer and undo the crispness).
-  const offsetXDevice = Math.floor((deviceW - deviceWidth) / 2);
-  const offsetYDevice = Math.floor((deviceH - deviceHeight) / 2);
+  // Centre the inner frame; the leftover device pixels become the black border.
+  // Snapped to whole device pixels so the canvas top-left doesn't land on a
+  // fractional pixel (which would resample the layer).
+  const offsetXDevice = Math.round((deviceW - deviceWidth) / 2);
+  const offsetYDevice = Math.round((deviceH - deviceHeight) / 2);
+  const offsetX = offsetXDevice / dpr;
+  const offsetY = offsetYDevice / dpr;
+
+  const widthCss = deviceWidth / dpr;
+  const heightCss = deviceHeight / dpr;
 
   return {
     columns,
     rows,
     cell, // device px per stud (integer)
-    size: cell / dpr, // css px per stud, for layout consumers (the nameplate)
+    size,
     dpr,
     deviceWidth,
     deviceHeight,
-    width: deviceWidth / dpr, // css size of the brick area
-    height: deviceHeight / dpr,
-    offsetX: offsetXDevice / dpr, // css inset that centres the fitted wall
-    offsetY: offsetYDevice / dpr
+    width: widthCss, // css size of the brick area (the inner frame)
+    height: heightCss,
+    offsetX, // css offset that centres the inner frame
+    offsetY,
+    // The wire box sits on the inner frame's edges (= the canvas edges); the
+    // header + name text align to the same lines.
+    frame: {
+      leftPx: offsetX,
+      topPx: offsetY,
+      rightPx: offsetX + widthCss,
+      bottomPx: offsetY + heightCss,
+      rightInsetPx: w - (offsetX + widthCss), // black border widths, for
+      bottomInsetPx: h - (offsetY + heightCss) // right/bottom-anchored elements
+    }
   };
 }
 
