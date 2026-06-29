@@ -119,31 +119,54 @@ button {
   background: #fff;
 }
 
-.frame-line.is-top { top: var(--wire-top); left: 0; right: 0; height: 1px; }
-.frame-line.is-bottom { top: var(--wire-bottom); left: 0; right: 0; height: 1px; }
-.frame-line.is-left { top: 0; bottom: 0; left: var(--wire-left); width: 1px; }
-.frame-line.is-right { top: 0; bottom: 0; left: var(--wire-right); width: 1px; }
+/* Extension layer: full-bleed lines running edge to edge (across the black
+   border to the screen edges, top to bottom). Only on screen during the load-in
+   draw; they dissolve away once the core square has settled. */
+.frame-line.is-ext.is-top { top: var(--wire-top); left: 0; right: 0; height: 1px; }
+.frame-line.is-ext.is-bottom { top: var(--wire-bottom); left: 0; right: 0; height: 1px; }
+.frame-line.is-ext.is-left { top: 0; bottom: 0; left: var(--wire-left); width: 1px; }
+.frame-line.is-ext.is-right { top: 0; bottom: 0; left: var(--wire-right); width: 1px; }
+.frame-line.is-ext.is-nav-under { top: calc(var(--wire-top) + var(--nav-band)); left: 0; right: 0; height: 1px; }
+.frame-line.is-ext.is-nav-down { top: 0; bottom: 0; width: 1px; }
 
-/* Vertical wire dropping from the top just left of the nav links; `left` is set
-   inline from the measured position of the links. */
-.frame-line.is-nav-down { top: 0; bottom: 0; width: 1px; }
+/* Core layer: the box bounded to the inner frame corners — the lines stop at the
+   wires. This is the resting frame that stays after the extensions fade. */
+.frame-line.is-core.is-top { top: var(--wire-top); left: var(--wire-left); right: var(--wire-right-inset); height: 1px; }
+.frame-line.is-core.is-bottom { top: var(--wire-bottom); left: var(--wire-left); right: var(--wire-right-inset); height: 1px; }
+.frame-line.is-core.is-left { top: var(--wire-top); bottom: var(--wire-bottom-inset); left: var(--wire-left); width: 1px; }
+.frame-line.is-core.is-right { top: var(--wire-top); bottom: var(--wire-bottom-inset); left: var(--wire-right); width: 1px; }
+
+/* Horizontal divider under the nav row, dividing off the header band; spans the
+   bounded frame width. */
+.frame-line.is-core.is-nav-under { top: calc(var(--wire-top) + var(--nav-band)); left: var(--wire-left); right: var(--wire-right-inset); height: 1px; }
+
+/* Vertical wire dropping from the top wire just left of the nav links, down to
+   the bottom wire; `left` is set inline from the measured position of the links. */
+.frame-line.is-core.is-nav-down { top: var(--wire-top); bottom: var(--wire-bottom-inset); width: 1px; }
 
 /* ---- Load-in choreography -------------------------------------------------
-   Staged once on first load: (1) the vertical wires draw top -> bottom, (2) the
-   horizontal wires draw left -> right to close the box, (3) the mosaic and the
-   text fade up together. Timings live as vars so the whole sequence is easy to
-   retune. The frame lines / canvas / text start hidden under `.is-intro` so
-   there's no flash of the finished frame before the grid resolves; the
-   animations (added with `.is-intro-ready`) use fill `both` to hold the hidden
-   from-state through their delay and the final state after. */
+   Staged once on first load: (1) the full-bleed extension wires draw in — the
+   verticals top -> bottom, then the horizontals left -> right — sweeping edge to
+   edge; (2) the bounded core square settles in underneath them; (3) the mosaic
+   fades up; (4) the text fades up; and (5) the extension wires dissolve, so the
+   overhangs reaching the screen edges disappear and only the bounded square
+   stays. Timings live as vars so the whole sequence is easy to retune. The frame
+   lines / canvas / text start hidden under `.is-intro` so there's no flash of the
+   finished frame before the grid resolves; the animations (added with
+   `.is-intro-ready`) use fill `both` to hold the hidden from-state through their
+   delay and the final state after. */
 .hero {
   --intro-v: 0.4s; /* vertical wires draw down */
   --intro-h: 0.38s; /* horizontal wires draw across */
   --intro-v-delay: 0.05s;
   --intro-h-delay: 0.42s; /* starts as the verticals finish */
+  --intro-core-in: 0.3s; /* bounded square settles in */
+  --intro-core-delay: 0.8s; /* once the box is drawn */
   --intro-fade: 0.5s;
   --intro-fade-delay: 0.8s; /* mosaic, once the box is closed */
   --intro-text-delay: 1.1s; /* text, once the mosaic is up */
+  --intro-wire-fade: 0.5s; /* extensions dissolve away */
+  --intro-wire-fade-delay: 1.1s; /* once the square has settled */
 }
 
 @keyframes wire-draw-y {
@@ -161,36 +184,57 @@ button {
   to { opacity: 1; }
 }
 
-/* Initial hidden state (and the resting state until the grid resolves). */
-.hero.is-intro .frame-line.is-left,
-.hero.is-intro .frame-line.is-right,
-.hero.is-intro .frame-line.is-nav-down {
+@keyframes wire-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Initial hidden state (and the resting state until the grid resolves): the
+   extension wires are collapsed for the draw-in; the core square + content are
+   faded out. */
+.hero.is-intro .frame-line.is-ext.is-left,
+.hero.is-intro .frame-line.is-ext.is-right,
+.hero.is-intro .frame-line.is-ext.is-nav-down {
   transform-origin: top;
   transform: scaleY(0);
 }
 
-.hero.is-intro .frame-line.is-top,
-.hero.is-intro .frame-line.is-bottom {
+.hero.is-intro .frame-line.is-ext.is-top,
+.hero.is-intro .frame-line.is-ext.is-bottom,
+.hero.is-intro .frame-line.is-ext.is-nav-under {
   transform-origin: left;
   transform: scaleX(0);
 }
 
+.hero.is-intro .frame-line.is-core,
 .hero.is-intro .brick-canvas,
 .hero.is-intro .hero-nav,
-.hero.is-intro .hero-content {
+.hero.is-intro .hero-content,
+.hero.is-intro .hero-loc {
   opacity: 0;
 }
 
 /* Grid resolved: play the sequence. */
-.hero.is-intro-ready .frame-line.is-left,
-.hero.is-intro-ready .frame-line.is-right,
-.hero.is-intro-ready .frame-line.is-nav-down {
-  animation: wire-draw-y var(--intro-v) ease-out var(--intro-v-delay) both;
+.hero.is-intro-ready .frame-line.is-ext.is-left,
+.hero.is-intro-ready .frame-line.is-ext.is-right,
+.hero.is-intro-ready .frame-line.is-ext.is-nav-down {
+  animation:
+    wire-draw-y var(--intro-v) ease-out var(--intro-v-delay) both,
+    wire-fade-out var(--intro-wire-fade) ease-out var(--intro-wire-fade-delay) both;
 }
 
-.hero.is-intro-ready .frame-line.is-top,
-.hero.is-intro-ready .frame-line.is-bottom {
-  animation: wire-draw-x var(--intro-h) ease-out var(--intro-h-delay) both;
+.hero.is-intro-ready .frame-line.is-ext.is-top,
+.hero.is-intro-ready .frame-line.is-ext.is-bottom,
+.hero.is-intro-ready .frame-line.is-ext.is-nav-under {
+  animation:
+    wire-draw-x var(--intro-h) ease-out var(--intro-h-delay) both,
+    wire-fade-out var(--intro-wire-fade) ease-out var(--intro-wire-fade-delay) both;
+}
+
+/* The bounded square fades in under the extensions (so the inner box stays solid
+   when the extensions later dissolve) and holds. */
+.hero.is-intro-ready .frame-line.is-core {
+  animation: hero-fade-in var(--intro-core-in) ease-out var(--intro-core-delay) both;
 }
 
 .hero.is-intro-ready .brick-canvas {
@@ -198,24 +242,32 @@ button {
 }
 
 .hero.is-intro-ready .hero-nav,
-.hero.is-intro-ready .hero-content {
+.hero.is-intro-ready .hero-content,
+.hero.is-intro-ready .hero-loc {
   animation: hero-fade-in var(--intro-fade) ease-out var(--intro-text-delay) both;
 }
 
-/* Respect reduced-motion: show everything immediately, no draw-in. */
+/* Respect reduced-motion: jump straight to the settled state — mosaic + text and
+   the bounded square shown, the extension overhangs hidden. */
 @media (prefers-reduced-motion: reduce) {
-  .hero.is-intro .frame-line,
+  .hero.is-intro .frame-line.is-core,
   .hero.is-intro .brick-canvas,
   .hero.is-intro .hero-nav,
-  .hero.is-intro .hero-content {
+  .hero.is-intro .hero-content,
+  .hero.is-intro .hero-loc {
     transform: none;
     opacity: 1;
     animation: none;
   }
+
+  .hero.is-intro .frame-line.is-ext {
+    opacity: 0;
+    animation: none;
+  }
 }
 
-/* Header row at the top of the inner frame: location label left, section links
-   right (over the darkened top of the vignette). */
+/* Header row at the top of the inner frame: section links, right-aligned (over
+   the darkened top of the vignette). */
 .hero-nav {
   position: absolute;
   top: var(--wire-top);
@@ -224,7 +276,7 @@ button {
   z-index: 3;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   height: var(--nav-band);
   /* Equal inset from the top wire and from the side wires, so each item sits the
      same distance from the top as from its nearest side. */
@@ -240,12 +292,36 @@ button {
   text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
 }
 
+/* Location label anchored to the bottom-right corner of the frame, right-aligned
+   over two lines (Vancouver / BC). Same inset as the bottom-left content block. */
 .hero-loc {
+  position: absolute;
+  right: var(--wire-right-inset);
+  bottom: var(--wire-bottom-inset);
+  z-index: 3;
+  padding: 0 var(--nav-pad) var(--nav-pad);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: clamp(13px, 1.3vw, 16px);
+  line-height: 1.1;
+  letter-spacing: .14em;
+  text-align: right;
+  color: rgba(255, 255, 255, .8);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
+}
+
+.hero-loc-place {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: clamp(13px, 1.3vw, 16px);
-  color: rgba(255, 255, 255, .8);
+}
+
+/* Second line (BC) dimmed, matching the unselected nav links. */
+.hero-loc > span:last-child {
+  color: rgba(255, 255, 255, .6);
 }
 
 .hero-loc svg {
@@ -310,7 +386,9 @@ button {
 
 .hero-socials {
   display: flex;
-  align-items: center;
+  /* Bottom-align the contact text + icons so the text sits on the frame's bottom
+     inset — the same line as the right-aligned location label (Vancouver / BC). */
+  align-items: flex-end;
   gap: clamp(12px, 1.4vw, 18px);
 }
 

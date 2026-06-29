@@ -115,25 +115,33 @@ function Hero() {
     >
       <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} />
 
-      {/* White wire box on the inner frame edges, extending out across the black
-          border to the screen edges. The is-nav-down wire drops from the top just
-          left of the nav links, dividing off the header's right cell. */}
+      {/* White wire box. Two layers: the extension layer sweeps in full-bleed
+          across the black border to the screen edges during the load-in, then
+          dissolves away; the core layer is the bounded square (stopping at the
+          frame corners) that settles in and stays. The is-nav-down wire drops
+          just left of the nav links, dividing off the header's right cell. */}
       <div className="hero-frame" aria-hidden="true">
-        <span className="frame-line is-top" />
-        <span className="frame-line is-bottom" />
-        <span className="frame-line is-left" />
-        <span className="frame-line is-right" />
+        <span className="frame-line is-ext is-top" />
+        <span className="frame-line is-ext is-bottom" />
+        <span className="frame-line is-ext is-left" />
+        <span className="frame-line is-ext is-right" />
+        <span className="frame-line is-ext is-nav-under" />
         {navWireX != null && (
-          <span className="frame-line is-nav-down" style={{ left: `${navWireX}px` }} />
+          <span className="frame-line is-ext is-nav-down" style={{ left: `${navWireX}px` }} />
+        )}
+
+        <span className="frame-line is-core is-top" />
+        <span className="frame-line is-core is-bottom" />
+        <span className="frame-line is-core is-left" />
+        <span className="frame-line is-core is-right" />
+        <span className="frame-line is-core is-nav-under" />
+        {navWireX != null && (
+          <span className="frame-line is-core is-nav-down" style={{ left: `${navWireX}px` }} />
         )}
       </div>
 
-      {/* Top strip: location on the left, section links on the right. */}
+      {/* Top strip: section links on the right. */}
       <header className="hero-nav">
-        <span className="hero-loc">
-          {ICONS.pin}
-          Vancouver, BC
-        </span>
         <nav className="hero-links" ref={linksRef} style={{ transform: `translateX(${navShiftX}px)` }}>
           <a
             href="/"
@@ -186,6 +194,15 @@ function Hero() {
           </a>
         </div>
       </div>
+
+      {/* Location label, right-aligned in the bottom-right corner of the frame. */}
+      <span className="hero-loc">
+        <span className="hero-loc-place">
+          {ICONS.pin}
+          Vancouver
+        </span>
+        <span>BC, Canada</span>
+      </span>
     </section>
   );
 }
