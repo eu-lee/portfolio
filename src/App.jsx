@@ -4,7 +4,7 @@ import { BrickCanvas } from "./components/BrickCanvas.jsx";
 import { BrickGrid } from "./components/BrickGrid.jsx";
 import { ProjectCard } from "./components/ProjectCard.jsx";
 import { useStudGrid } from "./lib/heroGrid.js";
-import heroBackground from "./assets/backgrounds/bkg2.gif";
+import heroBackground from "./assets/backgrounds/bkg4.gif";
 
 function navigateTo(path) {
   window.history.pushState({}, "", path);
@@ -151,9 +151,11 @@ function Hero() {
       <div className="hero-content">
         <h1 className="hero-name">Eugene Lee</h1>
         <p className="hero-tagline">
-          Building software with a love for algorithms and the problems underneath them.
+          I study Software Engineering at the University of Waterloo. I'm interested in hard problems and algorithms. I currently work at Eureka DevSecOps, where I work on agents for automated code vulnerability remediation.
         </p>
         <div className="hero-socials">
+
+          Feel free to reach out:
           <a href="https://github.com/" target="_blank" rel="noreferrer" aria-label="GitHub">
             {ICONS.github}
           </a>

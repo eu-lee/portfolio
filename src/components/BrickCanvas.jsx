@@ -335,15 +335,15 @@ export function BrickCanvas({
     // so it keeps the pixel character but the gradient grades within each stud and
     // dissolves the blocky row-steps continuously into the border (built below,
     // after the studs are drawn).
-    const TOP_EDGE_FADE = 14; // studs the top fade spans
-    const BOTTOM_EDGE_FADE = 14; // bottom starts earlier and fades across more studs
-    const TOP_EDGE_MAX_ALPHA = 0.82;
+    const TOP_EDGE_FADE = 18; // studs the top fade spans
+    const BOTTOM_EDGE_FADE = 13; // bottom starts earlier and fades across more studs
+    const TOP_EDGE_MAX_ALPHA = 1;
     const BOTTOM_EDGE_MAX_ALPHA = 1;
-    const TOP_EDGE_CURVE = 3.2; // higher keeps the edge darker and drops off faster
-    const BOTTOM_EDGE_CURVE = 0.5; // visible through more rows while still black at the bottom
+    const TOP_EDGE_CURVE = 1.3; // lower spreads the darkening deeper so the image dissolves smoothly into the frame instead of clashing right at the edge
+    const BOTTOM_EDGE_CURVE = 2; // concentrate darkening near the very bottom so studs keep their texture over already-dark content (no dead flat-black slab)
     const BOTTOM_SOLID_ROWS = 1;
     const BOTTOM_NEAR_SOLID_ROWS = 1;
-    const BOTTOM_NEAR_SOLID_ALPHA = 0.95;
+    const BOTTOM_NEAR_SOLID_ALPHA = 0.85;
     const vSpan = Math.min(Math.max(TOP_EDGE_FADE, BOTTOM_EDGE_FADE) * cell, deviceHeight / 2);
     const smooth = (t) => t * t * (3 - 2 * t);
     const expFade = (t, maxAlpha, curve) => {
@@ -371,14 +371,19 @@ export function BrickCanvas({
     const lctx = layer.getContext("2d");
     const mask = vSpan > 0 ? lctx.createLinearGradient(0, 0, 0, deviceHeight) : null;
     if (mask) {
-      const fr = vSpan / deviceHeight;
+      // The mask only smooths the per-row black wash where it meets the clear
+      // interior — it must NOT attenuate the dark edge rows (multiplying two
+      // fades there squares them and leaves the image bright right at the frame).
+      // smoothstep gives a flat shoulder at ~1 next to the edge, so the edge rows
+      // keep their full pixelFade darkness, then it feathers to 0 across the span
+      // and dissolves the blocky row-steps continuously into the image.
+      const topFr = Math.min(0.5, (TOP_EDGE_FADE * cell) / deviceHeight);
+      const botFr = Math.min(0.5, (BOTTOM_EDGE_FADE * cell) / deviceHeight);
       for (let i = 0; i <= 8; i += 1) {
         const u = i / 8;
-        mask.addColorStop(u * fr, `rgba(0,0,0,${expFade(1 - u, TOP_EDGE_MAX_ALPHA, TOP_EDGE_CURVE)})`);
-        mask.addColorStop(
-          1 - u * fr,
-          `rgba(0,0,0,${expFade(1 - u, BOTTOM_EDGE_MAX_ALPHA, BOTTOM_EDGE_CURVE)})`
-        );
+        const a = 1 - smooth(u); // 1 at the edge, 0 at the inner end of the span
+        mask.addColorStop(u * topFr, `rgba(0,0,0,${a})`);
+        mask.addColorStop(1 - u * botFr, `rgba(0,0,0,${a})`);
       }
     }
 
