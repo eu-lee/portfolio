@@ -50,18 +50,18 @@ export function studGrid(width: number, height: number, dpr = 1): StudGrid {
 
   const size = cell / dpr; // css px per stud
 
-  // The image is bounded to an inner frame, inset insetStuds from every screen
-  // edge. The surrounding border is solid black and the studs fade to black at
-  // the frame edges; the wire box sits on those edges. Inset in whole studs so
-  // the wires land on stud lines. FRAME_INSET_TRIM widens the frame by shaving
-  // that many studs off the inset on every side.
-  const FRAME_INSET_TRIM = 1;
-  const insetStuds = Math.max(
-    1,
-    Math.round(Math.max(20, Math.min(56, w * 0.03)) / size) - FRAME_INSET_TRIM
-  );
-  const columns = Math.max(1, fitCols - insetStuds * 2);
-  const rows = Math.max(1, fitRows - insetStuds * 2);
+  // The image is bounded to an inner frame with a stable CSS inset. Earlier this
+  // was derived by fitting studs across the whole viewport and trimming whole
+  // columns from both sides; that made the visible padding depend on DPR/browser
+  // zoom leftovers, so the frame could look centered on one display and shifted
+  // on another. Resolve the desired inset first, then snap the inner brick area
+  // to the nearest whole-stud dimensions.
+  const targetInsetCss = Math.max(28, Math.min(48, Math.min(w, h) * 0.038));
+  const targetInsetDevice = Math.round(targetInsetCss * dpr);
+  const targetWidth = Math.max(cell, deviceW - targetInsetDevice * 2);
+  const targetHeight = Math.max(cell, deviceH - targetInsetDevice * 2);
+  const columns = Math.max(1, Math.round(targetWidth / cell));
+  const rows = Math.max(1, Math.round(targetHeight / cell));
 
   const deviceWidth = columns * cell;
   const deviceHeight = rows * cell;

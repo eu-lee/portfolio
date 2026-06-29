@@ -63,19 +63,19 @@ button {
   --wire-bottom-inset: 48px;
   /* Height of the header row at the top of the inner frame, and the equal inset
      each header item keeps from the top wire and its nearest side wire. */
-  --nav-band: clamp(36px, min(5svh, 5vw), 58px);
-  --nav-pad: clamp(10px, min(1.5vw, 2.25svh), 20px);
+  --nav-band: clamp(34px, min(4.4svh, 4.2vw), 50px);
+  --nav-pad: clamp(9px, min(1.15vw, 1.8svh), 16px);
   /* One viewport-driven overlay scale. The top-right nav, nameplate, contact
      row, and location label all follow the same width/height ratio. */
-  --hero-name-size: clamp(30px, min(9vw, 13svh), 108px);
-  --hero-copy-size: clamp(11px, min(1.5vw, 2.35svh), 19px);
+  --hero-name-size: clamp(40px, min(7.2vw, 10svh), 96px);
+  --hero-copy-size: clamp(12px, min(1.25vw, 1.9svh), 16px);
   --hero-contact-size: var(--hero-copy-size);
-  --hero-link-size: clamp(12px, min(1.6vw, 2.35svh), 19px);
-  --hero-meta-size: clamp(9px, min(1.3vw, 2svh), 16px);
-  --hero-meta-spacing: clamp(.08em, .75vw, .14em);
-  --hero-stack-gap: clamp(8px, min(1.7vw, 2.6svh), 22px);
-  --hero-social-gap: clamp(7px, min(1.4vw, 2.2svh), 18px);
-  --hero-icon-size: clamp(15px, min(1.6vw, 3svh), 22px);
+  --hero-link-size: clamp(12px, min(1.35vw, 1.8svh), 16px);
+  --hero-meta-size: clamp(9px, min(1.05vw, 1.55svh), 14px);
+  --hero-meta-spacing: clamp(.08em, .55vw, .13em);
+  --hero-stack-gap: clamp(8px, min(1.35vw, 2svh), 16px);
+  --hero-social-gap: clamp(7px, min(1.15vw, 1.7svh), 14px);
+  --hero-icon-size: clamp(15px, min(1.35vw, 2.1svh), 20px);
   /* Lock native pinch-zoom and pan gestures that start on the hero. */
   touch-action: none;
   overscroll-behavior: none;
@@ -287,7 +287,7 @@ button {
   right: 0;
   z-index: 3;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
   height: var(--nav-band);
   /* Inset from the top wire; the right edge runs to the right wire so the links
@@ -296,7 +296,7 @@ button {
   padding:
     var(--nav-pad)
     var(--wire-right-inset)
-    0
+    var(--nav-pad)
     calc(var(--wire-left) + var(--nav-pad));
   font-family: "IBM Plex Mono", monospace;
   font-size: clamp(11px, min(1.05vw, 1.7svh), 13px);
