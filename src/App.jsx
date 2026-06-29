@@ -55,8 +55,10 @@ function Hero() {
       const linksRight = links.offsetLeft + links.offsetWidth;
       // Start with a balanced text-based position, then snap it to the seam on
       // the left edge of that stud so the divider doesn't cut through a brick.
+      // Bias the wire one stud further left so it isn't cramped against "home".
       const gap = grid?.frame ? grid.frame.rightPx - linksRight : 16;
-      const targetX = linksLeft - gap;
+      const extra = grid?.size ?? 0;
+      const targetX = linksLeft - gap - extra;
       if (grid?.frame && grid.size) {
         const seamIndex = Math.floor((targetX - grid.frame.leftPx) / grid.size);
         const wireX = grid.frame.leftPx + seamIndex * grid.size;
@@ -151,15 +153,15 @@ function Hero() {
       <div className="hero-content">
         <h1 className="hero-name">Eugene Lee</h1>
         <p className="hero-tagline">
-          I study Software Engineering at the University of Waterloo. I'm interested in hard problems and algorithms. I currently work at Eureka DevSecOps, where I work on agents for automated code vulnerability remediation.
+          I study Software Engineering at the University of Waterloo and have an interest towards hard problems and algorithms. I currently work at Eureka DevSecOps, where I work on agents for automated code vulnerability remediation.
         </p>
         <div className="hero-socials">
 
           Feel free to reach out:
-          <a href="https://github.com/" target="_blank" rel="noreferrer" aria-label="GitHub">
+          <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
             {ICONS.github}
           </a>
-          <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+          <a href="https://www.linkedin.com/in/eu-lee/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
             {ICONS.linkedin}
           </a>
           <a href="mailto:eugene.lee@uwaterloo.ca" aria-label="Email">

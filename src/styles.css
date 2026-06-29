@@ -141,17 +141,19 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: clamp(13px, 1.3vw, 16px);
   color: rgba(255, 255, 255, .8);
 }
 
 .hero-loc svg {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
 }
 
 .hero-links {
   display: flex;
   gap: clamp(18px, 2.4vw, 34px);
+  font-size: clamp(15px, 1.6vw, 19px);
 }
 
 .hero-links a {
@@ -181,24 +183,26 @@ button {
 .hero-name {
   margin: 0;
   transform: translateX(-.055em);
-  font-family: "Space Grotesk", system-ui, sans-serif;
-  font-weight: 700;
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 900;
   font-size: clamp(48px, 9vw, 108px);
   letter-spacing: 0;
-  word-spacing: -.12em;
+  word-spacing: .06em;
   line-height: .88;
   /* Keep the name on a single line. */
   white-space: nowrap;
-  color: #f4f6fb;
+  color: #ffffff;
   text-shadow: 0 2px 30px rgba(0, 0, 0, .5);
 }
 
 .hero-tagline {
-  margin: clamp(14px, 1.7vw, 22px) 0 clamp(20px, 2.2vw, 30px);
+  /* Bottom margin matches the content's padding-bottom (--nav-pad) so the socials
+     row sits centered between the tagline and the bottom wire. */
+  margin: clamp(14px, 1.7vw, 22px) 0 var(--nav-pad);
   max-width: 48ch;
   font-size: clamp(15px, 1.5vw, 19px);
   line-height: 1.42;
-  color: #c6cfdb;
+  color: #ffffff;
   text-shadow: 0 1px 16px rgba(0, 0, 0, .5);
 }
 
