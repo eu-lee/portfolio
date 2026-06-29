@@ -55,9 +55,8 @@ function Hero() {
   }, [grid]);
 
   // The nav links are right-aligned, so their left edge depends on the text
-  // width (and the font once it loads). Measure it so the vertical wire can sit
-  // just to the left of the first link ("home"), running down through the frame.
-  const [navWireX, setNavWireX] = useState(null);
+  // width (and the font once it loads). Measure it so the links can be centered
+  // within the header's right cell.
   const [navShiftX, setNavShiftX] = useState(0);
   useLayoutEffect(() => {
     const measure = () => {
@@ -77,10 +76,8 @@ function Hero() {
         const wireX = grid.frame.leftPx + seamIndex * grid.size;
         const leftGap = linksLeft - wireX;
         const rightGap = grid.frame.rightPx - linksRight;
-        setNavWireX(Math.round(wireX));
         setNavShiftX(Math.round((rightGap - leftGap) / 2));
       } else {
-        setNavWireX(Math.round(targetX));
         setNavShiftX(0);
       }
     };
@@ -126,18 +123,12 @@ function Hero() {
         <span className="frame-line is-ext is-left" />
         <span className="frame-line is-ext is-right" />
         <span className="frame-line is-ext is-nav-under" />
-        {navWireX != null && (
-          <span className="frame-line is-ext is-nav-down" style={{ left: `${navWireX}px` }} />
-        )}
 
         <span className="frame-line is-core is-top" />
         <span className="frame-line is-core is-bottom" />
         <span className="frame-line is-core is-left" />
         <span className="frame-line is-core is-right" />
         <span className="frame-line is-core is-nav-under" />
-        {navWireX != null && (
-          <span className="frame-line is-core is-nav-down" style={{ left: `${navWireX}px` }} />
-        )}
       </div>
 
       {/* Top strip: section links on the right. */}
