@@ -1,5 +1,5 @@
 import type { CSSProperties, MouseEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { filters, projects, type FilterId, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { BrickGrid } from "./components/BrickGrid";
@@ -41,6 +41,7 @@ const ICONS = {
 
 function Hero() {
   const heroRef = useRef<HTMLElement | null>(null);
+  const linksRef = useRef<HTMLElement | null>(null);
   const grid = useStudGrid(heroRef);
 
   // Load-in choreography: once the grid has resolved (so the wires land on their
@@ -54,6 +55,42 @@ function Hero() {
     introPlayedRef.current = true;
     const id = requestAnimationFrame(() => setIntroReady(true));
     return () => cancelAnimationFrame(id);
+  }, [grid]);
+
+  // Fence off a wide right cell with the vertical divider and spread the three
+  // links across it. The row spans the whole cell (divider -> right wire) and
+  // `space-evenly` (see CSS) distributes all four gaps equally: divider -> home,
+  // home -> work, work -> projects, projects -> right wire are the same.
+  const [navWireX, setNavWireX] = useState<number | null>(null);
+  const [navWidth, setNavWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const links = linksRef.current;
+      if (!links || !grid?.frame || !grid.size) return;
+
+      // Intrinsic word width — stable even once we widen the row, since
+      // space-evenly grows the gaps, not the words themselves.
+      let textWidth = 0;
+      for (let i = 0; i < links.children.length; i += 1) {
+        textWidth += (links.children[i] as HTMLElement).offsetWidth;
+      }
+
+      // Pick a comfortable gap; the cell holds the words plus four of them. Place
+      // the divider that far left of the right wire, snapped to a stud seam, then
+      // size the row to span the whole cell so the even spacing lands exactly.
+      const gap = Math.max(28, Math.min(72, grid.frame.rightPx * 0.038));
+      const desiredLeft = grid.frame.rightPx - (textWidth + 4 * gap);
+      const seamIndex = Math.floor((desiredLeft - grid.frame.leftPx) / grid.size);
+      const wireX = grid.frame.leftPx + seamIndex * grid.size;
+      setNavWireX(Math.round(wireX));
+      setNavWidth(Math.round(grid.frame.rightPx - wireX));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (linksRef.current) observer.observe(linksRef.current);
+    if (heroRef.current) observer.observe(heroRef.current);
+    document.fonts?.ready.then(measure);
+    return () => observer.disconnect();
   }, [grid]);
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
@@ -90,17 +127,27 @@ function Hero() {
         <span className="frame-line is-ext is-left" />
         <span className="frame-line is-ext is-right" />
         <span className="frame-line is-ext is-nav-under" />
+        {navWireX != null && (
+          <span className="frame-line is-ext is-nav-down" style={{ left: `${navWireX}px` }} />
+        )}
 
         <span className="frame-line is-core is-top" />
         <span className="frame-line is-core is-bottom" />
         <span className="frame-line is-core is-left" />
         <span className="frame-line is-core is-right" />
         <span className="frame-line is-core is-nav-under" />
+        {navWireX != null && (
+          <span className="frame-line is-core is-nav-down" style={{ left: `${navWireX}px` }} />
+        )}
       </div>
 
       {/* Top strip: section links on the right. */}
       <header className="hero-nav">
-        <nav className="hero-links">
+        <nav
+          className="hero-links"
+          ref={linksRef}
+          style={navWidth != null ? { width: `${navWidth}px` } : undefined}
+        >
           <a
             href="/"
             className="is-active"

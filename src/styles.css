@@ -278,11 +278,12 @@ button {
   align-items: flex-start;
   justify-content: flex-end;
   height: var(--nav-band);
-  /* Equal inset from the top wire and from the side wires, so each item sits the
-     same distance from the top as from its nearest side. */
+  /* Inset from the top wire; the right edge runs to the right wire so the links
+     row (sized inline) can span the full nav cell and space its words evenly out
+     to that wire. The left padding only matters as an overflow floor. */
   padding:
     var(--nav-pad)
-    calc(var(--wire-right-inset) + var(--nav-pad))
+    var(--wire-right-inset)
     0
     calc(var(--wire-left) + var(--nav-pad));
   font-family: "IBM Plex Mono", monospace;
@@ -331,7 +332,11 @@ button {
 
 .hero-links {
   display: flex;
-  gap: clamp(18px, 2.4vw, 34px);
+  /* Width is set inline to span the nav cell (divider -> right wire); space-evenly
+     distributes all four gaps equally. gap stays 0 so it doesn't add to the
+     between-word spacing and break that even distribution. */
+  justify-content: space-evenly;
+  gap: 0;
   font-size: clamp(15px, 1.6vw, 19px);
 }
 
