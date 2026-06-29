@@ -1,4 +1,6 @@
-import { legoColor, rgba } from "../data/legoColors.js";
+import type { CSSProperties } from "react";
+import { legoColor, type LegoColor, rgba } from "../data/legoColors";
+import type { BoardType } from "../data/projects";
 
 const LEGO = {
   red: legoColor("red"),
@@ -14,9 +16,9 @@ const LEGO = {
   darkGray: legoColor("darkBluishGray")
 };
 
-function boardColors(type, width, height) {
-  const cells = new Array(width * height).fill(LEGO.lightGray);
-  const set = (x, y, color) => {
+function boardColors(type: BoardType, width: number, height: number) {
+  const cells: LegoColor[] = new Array(width * height).fill(LEGO.lightGray);
+  const set = (x: number, y: number, color: LegoColor) => {
     if (x >= 0 && x < width && y >= 0 && y < height) cells[y * width + x] = color;
   };
 
@@ -52,7 +54,7 @@ function boardColors(type, width, height) {
   }
 
   cells.fill(LEGO.gray);
-  const line = (x0, y0, x1, y1, color) => {
+  const line = (x0: number, y0: number, x1: number, y1: number, color: LegoColor) => {
     const count = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
     for (let i = 0; i <= count; i += 1) {
       set(Math.round(x0 + ((x1 - x0) * i) / count), Math.round(y0 + ((y1 - y0) * i) / count), color);
@@ -63,7 +65,7 @@ function boardColors(type, width, height) {
   const sy = height / 11;
   const nodes = [[2, 2], [8, 1], [13, 3], [5, 6], [11, 7], [3, 9], [9, 10]].map(
     ([x, y]) => [Math.round(x * sx), Math.round(y * sy)]
-  );
+  ) as Array<[number, number]>;
   [[0, 1], [1, 2], [0, 3], [3, 4], [1, 4], [4, 6], [3, 5], [5, 6], [2, 4]].forEach(([a, b]) => {
     line(nodes[a][0], nodes[a][1], nodes[b][0], nodes[b][1], LEGO.darkGray);
   });
@@ -79,7 +81,13 @@ function boardColors(type, width, height) {
   return cells;
 }
 
-export function BrickGrid({ type, width = 20, height = 14 }) {
+type BrickGridProps = {
+  type: BoardType;
+  width?: number;
+  height?: number;
+};
+
+export function BrickGrid({ type, width = 20, height = 14 }: BrickGridProps) {
   return (
     <div className="brick-grid" style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
       {boardColors(type, width, height).map((color, index) => (
@@ -90,7 +98,7 @@ export function BrickGrid({ type, width = 20, height = 14 }) {
             "--lego-solid": color.value,
             "--lego-edge": color.edge,
             "--lego-alpha": color.alpha
-          }}
+          } as CSSProperties}
           title={color.name}
           key={`${type}-${index}`}
         >

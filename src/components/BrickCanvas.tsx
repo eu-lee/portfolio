@@ -1,10 +1,44 @@
 import { useEffect, useRef, useState } from "react";
-import { decompressFrames, parseGIF } from "gifuct-js";
-import { mixColor } from "../data/legoColors.js";
+import { decompressFrames, parseGIF, type ParsedFrame, type ParsedGif } from "gifuct-js";
+import { mixColor, type LegoColor } from "../data/legoColors";
+import type { StudGrid } from "../lib/heroGrid";
+
+type MediaKind = "video" | "gif" | "image";
+type StudTint = Pick<LegoColor, "value" | "alpha">;
+type ComposedGifFrame = {
+  source: HTMLCanvasElement;
+  delay: number;
+};
+type ComposedGif = {
+  width: number;
+  height: number;
+  frames: ComposedGifFrame[];
+};
+type VideoFrameElement = HTMLVideoElement & {
+  requestVideoFrameCallback?: (callback: (time: number) => void) => number;
+  cancelVideoFrameCallback?: (handle: number) => void;
+};
+
+type BrickCanvasProps = {
+  src: string;
+  grid: StudGrid | null;
+  panStuds?: number;
+  focalX?: number;
+  focalY?: number;
+  mediaDarken?: number;
+};
+
+function canvasContext(canvas: HTMLCanvasElement, options?: CanvasRenderingContext2DSettings) {
+  const ctx = canvas.getContext("2d", options);
+  if (!ctx) {
+    throw new Error("Could not create 2D canvas context");
+  }
+  return ctx;
+}
 
 // Deterministic, position-locked surface variation so the field reads as real
 // plastic rather than flat CGI. Independent of the source image => fine grain.
-function surfaceJitter(x, y) {
+function surfaceJitter(x: number, y: number) {
   const h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
   return h - Math.floor(h) - 0.5; // [-0.5, 0.5]
 }
@@ -14,8 +48,8 @@ function surfaceJitter(x, y) {
 // tint is quantized to 8 steps per channel only to bound the sprite cache: a
 // downsampled image resolves to a few hundred distinct tints, indistinguishable
 // from the exact sample but cheap to cache and redraw.
-const quantizeChannel = (n) => n & 0xf8;
-function quantizeHex(r, g, b) {
+const quantizeChannel = (n: number) => n & 0xf8;
+function quantizeHex(r: number, g: number, b: number): `#${string}` {
   const packed =
     (1 << 24) + (quantizeChannel(r) << 16) + (quantizeChannel(g) << 8) + quantizeChannel(b);
   return `#${packed.toString(16).slice(1)}`;
@@ -24,32 +58,35 @@ function quantizeHex(r, g, b) {
 const GIF_SOURCE_RE = /\.gif(?:$|[?#])/i;
 const VIDEO_SOURCE_RE = /\.(mp4|webm|ogg|ogv|mov)(?:$|[?#])/i;
 
-function mediaKindFromSrc(src) {
+function mediaKindFromSrc(src: string): MediaKind {
   if (VIDEO_SOURCE_RE.test(src)) return "video";
   if (GIF_SOURCE_RE.test(src)) return "gif";
   return "image";
 }
 
-function mediaSize(media, kind) {
+function mediaSize(media: HTMLVideoElement | HTMLImageElement | ComposedGif, kind: MediaKind) {
   if (kind === "video") {
-    return { width: media.videoWidth, height: media.videoHeight };
+    const video = media as HTMLVideoElement;
+    return { width: video.videoWidth, height: video.videoHeight };
   }
   if (kind === "gif") {
-    return { width: media.width, height: media.height };
+    const gif = media as ComposedGif;
+    return { width: gif.width, height: gif.height };
   }
-  return { width: media.naturalWidth, height: media.naturalHeight };
+  const image = media as HTMLImageElement;
+  return { width: image.naturalWidth, height: image.naturalHeight };
 }
 
-function composeGifFrames(parsedGif, frames) {
+function composeGifFrames(parsedGif: ParsedGif, frames: ParsedFrame[]): ComposedGif {
   const width = parsedGif.lsd.width;
   const height = parsedGif.lsd.height;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  const composed = [];
-  let previousFrame = null;
-  let restoreData = null;
+  const ctx = canvasContext(canvas);
+  const composed: ComposedGifFrame[] = [];
+  let previousFrame: ParsedFrame | null = null;
+  let restoreData: { left: number; top: number; data: ImageData } | null = null;
 
   for (const frame of frames) {
     if (previousFrame?.disposalType === 2) {
@@ -72,13 +109,13 @@ function composeGifFrames(parsedGif, frames) {
     const patchCanvas = document.createElement("canvas");
     patchCanvas.width = frameWidth;
     patchCanvas.height = frameHeight;
-    patchCanvas.getContext("2d").putImageData(new ImageData(frame.patch, frameWidth, frameHeight), 0, 0);
+    canvasContext(patchCanvas).putImageData(new ImageData(new Uint8ClampedArray(frame.patch), frameWidth, frameHeight), 0, 0);
     ctx.drawImage(patchCanvas, left, top);
 
     const fullFrame = document.createElement("canvas");
     fullFrame.width = width;
     fullFrame.height = height;
-    fullFrame.getContext("2d").drawImage(canvas, 0, 0);
+    canvasContext(fullFrame).drawImage(canvas, 0, 0);
     composed.push({
       source: fullFrame,
       delay: Math.max(20, frame.delay || 100)
@@ -93,7 +130,7 @@ function composeGifFrames(parsedGif, frames) {
 // Single light direction: top-left. Highlights live upper-left, shadows fall
 // toward the bottom-right. `color` is any { value: "#rrggbb", alpha } — the tint
 // is supplied per stud by sampling the source image, not a fixed LEGO palette.
-function drawStud(ctx, x, y, size, color) {
+function drawStud(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: StudTint) {
   const alpha = color.alpha ?? 1;
 
   // --- Base plate: darker than the raised stud top. ---
@@ -218,15 +255,15 @@ export function BrickCanvas({
   focalX = 0.5,
   focalY = 0.5,
   mediaDarken = 0
-}) {
+}: BrickCanvasProps) {
   const kind = mediaKindFromSrc(src);
-  const canvasRef = useRef(null);
-  const imageElementRef = useRef(null);
-  const videoElementRef = useRef(null);
-  const gifRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imageElementRef = useRef<HTMLImageElement | null>(null);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
+  const gifRef = useRef<ComposedGif | null>(null);
   // One detailed stud rendered per (quantized) tint, reused across the wall and
   // across redraws; only rebuilt when the stud size or DPR changes.
-  const spriteRef = useRef({ cache: new Map(), key: "" });
+  const spriteRef = useRef<{ cache: Map<string, HTMLCanvasElement>; key: string }>({ cache: new Map(), key: "" });
   const [ready, setReady] = useState(false);
 
   // Reset readiness when the source changes; the hidden DOM media element below
@@ -283,7 +320,8 @@ export function BrickCanvas({
     if (deviceWidth === 0 || deviceHeight === 0) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    if (!canvas) return;
+    const ctx = canvasContext(canvas);
     if (canvas.width !== deviceWidth || canvas.height !== deviceHeight) {
       canvas.width = deviceWidth;
       canvas.height = deviceHeight;
@@ -294,13 +332,13 @@ export function BrickCanvas({
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
 
-    function getSprite(hex) {
+    function getSprite(hex: `#${string}`) {
       const cached = spriteRef.current.cache.get(hex);
       if (cached) return cached;
       const off = document.createElement("canvas");
       off.width = cell;
       off.height = cell;
-      const octx = off.getContext("2d");
+      const octx = canvasContext(off);
       drawStud(octx, 0, 0, cell, { value: hex, alpha: 1 });
       spriteRef.current.cache.set(hex, off);
       return off;
@@ -309,7 +347,7 @@ export function BrickCanvas({
     // Offscreen buffer that downsamples the source image to the stud grid; the
     // browser averages each source region for us as it scales the draw down.
     const sampler = document.createElement("canvas");
-    const sctx = sampler.getContext("2d", { willReadFrequently: true });
+    const sctx = canvasContext(sampler, { willReadFrequently: true });
 
     // Downsample the source into a columns x rows buffer, cover-fitting it so it
     // matches CSS `background-size: cover` framing. `focalX` / `focalY` choose
@@ -345,12 +383,12 @@ export function BrickCanvas({
     const BOTTOM_NEAR_SOLID_ROWS = 1;
     const BOTTOM_NEAR_SOLID_ALPHA = 0.85;
     const vSpan = Math.min(Math.max(TOP_EDGE_FADE, BOTTOM_EDGE_FADE) * cell, deviceHeight / 2);
-    const smooth = (t) => t * t * (3 - 2 * t);
-    const expFade = (t, maxAlpha, curve) => {
+    const smooth = (t: number) => t * t * (3 - 2 * t);
+    const expFade = (t: number, maxAlpha: number, curve: number) => {
       const clamped = Math.max(0, Math.min(1, t));
       return ((Math.exp(curve * clamped) - 1) / (Math.exp(curve) - 1)) * maxAlpha;
     };
-    const pixelFade = (y) => {
+    const pixelFade = (y: number) => {
       const topDist = y + 0.5;
       const bottomRow = rows - 1 - y;
       const topAlpha = expFade(1 - (topDist - 0.5) / TOP_EDGE_FADE, TOP_EDGE_MAX_ALPHA, TOP_EDGE_CURVE);
@@ -368,7 +406,7 @@ export function BrickCanvas({
     const layer = document.createElement("canvas");
     layer.width = deviceWidth;
     layer.height = deviceHeight;
-    const lctx = layer.getContext("2d");
+    const lctx = canvasContext(layer);
     const mask = vSpan > 0 ? lctx.createLinearGradient(0, 0, 0, deviceHeight) : null;
     if (mask) {
       // The mask only smooths the per-row black wash where it meets the clear
@@ -387,7 +425,7 @@ export function BrickCanvas({
       }
     }
 
-    const drawFrame = (source) => {
+    const drawFrame = (source: CanvasImageSource) => {
       sctx.clearRect(0, 0, columns, rows);
       sctx.drawImage(
         source,
@@ -454,19 +492,21 @@ export function BrickCanvas({
     let gifTimer = 0;
     let lastDraw = 0;
     let stopped = false;
+    let cancelVideoFrame: ((handle: number) => void) | undefined;
 
-    const tick = (time) => {
+    const tick = (time: number) => {
       if (stopped) return;
       if (time - lastDraw >= frameMs) {
-        drawFrame(media);
+        drawFrame(media as CanvasImageSource);
         lastDraw = time;
       }
       animationFrame = requestAnimationFrame(tick);
     };
 
     if (kind === "gif") {
+      const gifMedia = media as ComposedGif;
       let frameIndex = 0;
-      const gifFrames = media.frames;
+      const gifFrames = gifMedia.frames;
       const drawNextGifFrame = () => {
         if (stopped || gifFrames.length === 0) return;
         const frame = gifFrames[frameIndex];
@@ -476,14 +516,16 @@ export function BrickCanvas({
       };
       drawNextGifFrame();
     } else if (kind === "video") {
-      drawFrame(media);
+      const videoMedia = media as VideoFrameElement;
+      drawFrame(videoMedia);
       const scheduleVideoFrame = () => {
         if (stopped) return;
-        if (typeof media.requestVideoFrameCallback === "function") {
-          videoFrame = media.requestVideoFrameCallback((time) => {
+        if (typeof videoMedia.requestVideoFrameCallback === "function") {
+          cancelVideoFrame = videoMedia.cancelVideoFrameCallback?.bind(videoMedia);
+          videoFrame = videoMedia.requestVideoFrameCallback((time: number) => {
             if (stopped) return;
             if (time - lastDraw >= frameMs) {
-              drawFrame(media);
+              drawFrame(videoMedia);
               lastDraw = time;
             }
             scheduleVideoFrame();
@@ -494,15 +536,15 @@ export function BrickCanvas({
       };
       scheduleVideoFrame();
     } else {
-      drawFrame(media);
+      drawFrame(media as HTMLImageElement);
     }
 
     return () => {
       stopped = true;
       if (animationFrame) cancelAnimationFrame(animationFrame);
       if (gifTimer) window.clearTimeout(gifTimer);
-      if (videoFrame && typeof media.cancelVideoFrameCallback === "function") {
-        media.cancelVideoFrameCallback(videoFrame);
+      if (videoFrame && cancelVideoFrame) {
+        cancelVideoFrame(videoFrame);
       }
     };
   }, [grid, kind, ready, src, panStuds, focalX, focalY, mediaDarken]);

@@ -1,11 +1,18 @@
-import { BrickGrid } from "./BrickGrid.jsx";
+import type { CSSProperties } from "react";
+import type { Project } from "../data/projects";
+import { BrickGrid } from "./BrickGrid";
 
-export function ProjectCard({ project, onOpen }) {
+type ProjectCardProps = {
+  project: Project;
+  onOpen: (project: Project) => void;
+};
+
+export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   return (
     <article className={`project-card${project.featured ? " is-featured" : ""}`}>
       <button
         className="project-cover"
-        style={{ "--accent": `var(--${project.accent})` }}
+        style={{ "--accent": `var(--${project.accent})` } as CSSProperties}
         type="button"
         onClick={() => onOpen(project)}
       >

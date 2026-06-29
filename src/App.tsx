@@ -1,12 +1,15 @@
+import type { CSSProperties, MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { filters, projects } from "./data/projects.js";
-import { BrickCanvas } from "./components/BrickCanvas.jsx";
-import { BrickGrid } from "./components/BrickGrid.jsx";
-import { ProjectCard } from "./components/ProjectCard.jsx";
-import { useStudGrid } from "./lib/heroGrid.js";
+import { filters, projects, type FilterId, type Project } from "./data/projects";
+import { BrickCanvas } from "./components/BrickCanvas";
+import { BrickGrid } from "./components/BrickGrid";
+import { ProjectCard } from "./components/ProjectCard";
+import { useStudGrid } from "./lib/heroGrid";
 import heroBackground from "./assets/backgrounds/bkg4.gif";
 
-function navigateTo(path) {
+type CssVars = CSSProperties & Record<`--${string}`, string | number>;
+
+function navigateTo(path: string) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
@@ -37,7 +40,7 @@ const ICONS = {
 };
 
 function Hero() {
-  const heroRef = useRef(null);
+  const heroRef = useRef<HTMLElement | null>(null);
   const grid = useStudGrid(heroRef);
 
   // Load-in choreography: once the grid has resolved (so the wires land on their
@@ -57,7 +60,7 @@ function Hero() {
   // so the frame and the studs share boundaries. Falls back to the CSS defaults
   // for the first paint before the grid is measured.
   const f = grid?.frame;
-  const frameVars = f
+  const frameVars: CssVars | undefined = f
     ? {
         "--wire-top": `${f.topPx}px`,
         "--wire-bottom": `${f.bottomPx}px`,
@@ -162,8 +165,12 @@ function Hero() {
   );
 }
 
-function Projects({ onOpenProject }) {
-  const [activeFilter, setActiveFilter] = useState("all");
+type ProjectsProps = {
+  onOpenProject: (project: Project) => void;
+};
+
+function Projects({ onOpenProject }: ProjectsProps) {
+  const [activeFilter, setActiveFilter] = useState<FilterId>("all");
   const visibleProjects = useMemo(() => {
     if (activeFilter === "all") return projects;
     return projects.filter((project) => project.category === activeFilter);
@@ -206,8 +213,14 @@ function Projects({ onOpenProject }) {
   );
 }
 
-function ProjectDialog({ project, onClose }) {
+type ProjectDialogProps = {
+  project: Project | null;
+  onClose: () => void;
+};
+
+function ProjectDialog({ project, onClose }: ProjectDialogProps) {
   if (!project) return null;
+  const links = project.links ?? [];
 
   return (
     <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}>
@@ -216,12 +229,12 @@ function ProjectDialog({ project, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-dialog-title"
-        onMouseDown={(event) => event.stopPropagation()}
+        onMouseDown={(event: MouseEvent) => event.stopPropagation()}
       >
         <button className="dialog-close" type="button" aria-label="Close project details" onClick={onClose}>
           ×
         </button>
-        <div className="dialog-hero" style={{ "--accent": `var(--${project.accent})` }}>
+        <div className="dialog-hero" style={{ "--accent": `var(--${project.accent})` } as CssVars}>
           {project.cover ? (
             <img className="cover-image" src={project.cover} alt={`${project.title} cover`} />
           ) : (
@@ -234,9 +247,9 @@ function ProjectDialog({ project, onClose }) {
           {(project.description ?? [project.summary]).map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
-          {project.links?.length > 0 && (
+          {links.length > 0 && (
             <div className="dialog-links">
-              {project.links.map((link) => (
+              {links.map((link) => (
                 <a key={`${link.label}-${link.href}`} href={link.href} target="_blank" rel="noreferrer">
                   {link.label}
                 </a>
@@ -255,7 +268,7 @@ function ProjectDialog({ project, onClose }) {
 }
 
 export default function App() {
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [path, setPath] = useState(window.location.pathname);
 
   useEffect(() => {
@@ -270,7 +283,7 @@ export default function App() {
   // accessibility and reflows the studs crisply. Must be non-passive so
   // preventDefault takes effect.
   useEffect(() => {
-    const onWheel = (event) => {
+    const onWheel = (event: WheelEvent) => {
       if (event.ctrlKey) event.preventDefault();
     };
     window.addEventListener("wheel", onWheel, { passive: false });

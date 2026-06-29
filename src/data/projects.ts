@@ -11,7 +11,37 @@
 //                  import tokenstreamCover from "../assets/projects/tokenstream.png";
 //                then set `cover: tokenstreamCover` below.
 
-export const projects = [
+export type BoardType = "heat" | "layers" | "bars" | "graph";
+export type ProjectCategory = "ml" | "algorithms" | "systems";
+export type FilterId = "all" | ProjectCategory;
+
+export type ProjectLink = {
+  label: string;
+  href: string;
+};
+
+export type Project = {
+  id: string;
+  title: string;
+  subtitle: string;
+  kind: string;
+  category: ProjectCategory;
+  accent: "orange" | "azure" | "green" | "blue";
+  board: BoardType;
+  featured?: boolean;
+  cover: string | null;
+  summary: string;
+  description?: string[];
+  links?: ProjectLink[];
+  stack: string[];
+};
+
+export type ProjectFilter = {
+  id: FilterId;
+  label: string;
+};
+
+export const projects: Project[] = [
   {
     id: "attention-atlas",
     title: "Attention Atlas",
@@ -94,7 +124,7 @@ export const projects = [
   }
 ];
 
-export const filters = [
+export const filters: ProjectFilter[] = [
   { id: "all", label: "All" },
   { id: "ml", label: "ML" },
   { id: "algorithms", label: "Algorithms" },

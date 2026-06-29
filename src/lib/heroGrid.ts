@@ -1,4 +1,26 @@
-import { useLayoutEffect, useState } from "react";
+import { type RefObject, useLayoutEffect, useState } from "react";
+
+export type StudGrid = {
+  columns: number;
+  rows: number;
+  cell: number;
+  size: number;
+  dpr: number;
+  deviceWidth: number;
+  deviceHeight: number;
+  width: number;
+  height: number;
+  offsetX: number;
+  offsetY: number;
+  frame: {
+    leftPx: number;
+    topPx: number;
+    rightPx: number;
+    bottomPx: number;
+    rightInsetPx: number;
+    bottomInsetPx: number;
+  };
+};
 
 // Single source of truth for the hero stud grid. BrickCanvas renders the studs
 // on this grid. The wire box and the overlaid text are positioned in CSS
@@ -12,7 +34,7 @@ import { useLayoutEffect, useState } from "react";
 // The wall is sized to *cover* the viewport (rounded up to whole studs) and
 // centred, so it bleeds off all four screen edges instead of sitting inside a
 // border. The sub-stud overflow is clipped by the hero's overflow:hidden.
-export function studGrid(width, height, dpr = 1) {
+export function studGrid(width: number, height: number, dpr = 1): StudGrid {
   const w = Math.max(1, Math.round(width));
   const h = Math.max(1, Math.round(height));
   const deviceW = Math.round(w * dpr);
@@ -80,8 +102,8 @@ export function studGrid(width, height, dpr = 1) {
 // rounding each through studGrid's Math.round(w/14) can let layers land on
 // different grids under browser zoom: a sub-pixel width difference could flip
 // `columns` for one layer but not the other.
-export function useStudGrid(ref) {
-  const [grid, setGrid] = useState(null);
+export function useStudGrid(ref: RefObject<HTMLElement | null>) {
+  const [grid, setGrid] = useState<StudGrid | null>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -104,7 +126,7 @@ export function useStudGrid(ref) {
     // observer never fires. Watch the current resolution and re-measure — then
     // re-arm the query for the new dpr, since a media query is bound to a fixed
     // value.
-    let media;
+    let media: MediaQueryList | undefined;
     const onDprChange = () => {
       measure();
       arm();
