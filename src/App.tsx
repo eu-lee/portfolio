@@ -328,29 +328,9 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
           <div className="stage-meta">
             <div className="stage-top">
               <span className="stage-num">{String(activeIndex + 1).padStart(2, "0")}</span>
-              {activeProject.links?.[0] ? (
-                <a
-                  className="stage-kind"
-                  style={{ color: `var(--${activeProject.accent})` }}
-                  href={activeProject.links[0].href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {activeProject.kind}
-                </a>
-              ) : (
-                <span className="stage-kind" style={{ color: `var(--${activeProject.accent})` }}>
-                  {activeProject.kind}
-                </span>
-              )}
             </div>
             <h1 className="stage-title">{activeProject.title}</h1>
             <p className="stage-sub">{activeProject.subtitle}</p>
-            <div className="stage-stack">
-              {activeProject.stack.map((item) => (
-                <span key={item}>{item}</span>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -419,7 +399,7 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
         <button className="dialog-close" type="button" aria-label="Close project details" onClick={onClose}>
           ×
         </button>
-        <div className="dialog-hero" style={{ "--accent": `var(--${project.accent})` } as CssVars}>
+        <div className="dialog-hero">
           {project.cover ? (
             <img className="cover-image" src={project.cover} alt={`${project.title} cover`} />
           ) : (
@@ -427,7 +407,6 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
           )}
         </div>
         <div className="dialog-content">
-          <p className="eyebrow">{project.kind}</p>
           <h2 id="project-dialog-title">{project.title}</h2>
           {(project.description ?? [project.summary]).map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
@@ -441,11 +420,6 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
               ))}
             </div>
           )}
-          <div className="meta-list">
-            {project.stack.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
         </div>
       </section>
     </div>

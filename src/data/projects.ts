@@ -12,8 +12,6 @@ import projectData from "./projects.json";
 //                public/projects/ and use "/projects/your-image.png".
 
 export type BoardType = "heat" | "layers" | "bars" | "graph";
-export type ProjectCategory = "ml" | "algorithms" | "systems";
-export type FilterId = "all" | ProjectCategory;
 
 export type ProjectLink = {
   label: string;
@@ -24,22 +22,12 @@ export type Project = {
   id: string;
   title: string;
   subtitle: string;
-  kind: string;
-  category: ProjectCategory;
-  accent: "orange" | "azure" | "green" | "blue";
   board: BoardType;
   featured?: boolean;
   cover: string | null;
   summary: string;
   description?: string[];
   links?: ProjectLink[];
-  stack: string[];
-};
-
-export type ProjectFilter = {
-  id: FilterId;
-  label: string;
 };
 
 export const projects = projectData.projects as Project[];
-export const filters = projectData.filters as ProjectFilter[];

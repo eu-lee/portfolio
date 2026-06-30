@@ -4,30 +4,23 @@
       "id": "attention-atlas",
       "title": "Attention Atlas",
       "subtitle": "Transformer attention explorer",
-      "kind": "Live demo",
-      "category": "ml",
-      "accent": "orange",
       "board": "heat",
       "featured": false,
       "cover": null,
       "summary": "Transformer attention, made legible head by head.",
       "description": [
         "Attention Atlas is a visual tool for inspecting how transformer models route information - surfacing per-head attention patterns, token focus, and how behavior shifts layer by layer.",
-        "Load a sequence and step through the stack to see which tokens each head attends to, compare heads side by side, and build intuition for the structures that emerge inside a trained model."
+        "Load a sequence and step through the layers to see which tokens each head attends to, compare heads side by side, and build intuition for the structures that emerge inside a trained model."
       ],
       "links": [
         { "label": "Live demo", "href": "#" },
         { "label": "Source", "href": "#" }
-      ],
-      "stack": ["Transformers", "Visualization", "TypeScript"]
+      ]
     },
     {
       "id": "graph-pathfinder",
       "title": "Graph Pathfinder",
       "subtitle": "A* and Dijkstra visualizer",
-      "kind": "Live demo",
-      "category": "algorithms",
-      "accent": "azure",
       "board": "graph",
       "featured": true,
       "cover": null,
@@ -39,16 +32,12 @@
       "links": [
         { "label": "Live demo", "href": "#" },
         { "label": "Source", "href": "#" }
-      ],
-      "stack": ["Algorithms", "Canvas", "Data Structures"]
+      ]
     },
     {
       "id": "tokenstream",
       "title": "TokenStream",
       "subtitle": "Tiny LLM inference engine",
-      "kind": "Project",
-      "category": "systems",
-      "accent": "green",
       "board": "layers",
       "featured": false,
       "cover": null,
@@ -59,16 +48,12 @@
       ],
       "links": [
         { "label": "Source", "href": "#" }
-      ],
-      "stack": ["Systems", "LLMs", "Performance"]
+      ]
     },
     {
       "id": "sortlab",
       "title": "SortLab",
       "subtitle": "Sorting algorithm playground",
-      "kind": "Project",
-      "category": "algorithms",
-      "accent": "blue",
       "board": "bars",
       "featured": false,
       "cover": null,
@@ -80,14 +65,7 @@
       "links": [
         { "label": "Live demo", "href": "#" },
         { "label": "Source", "href": "#" }
-      ],
-      "stack": ["Algorithms", "Animation", "Education"]
+      ]
     }
-  ],
-  "filters": [
-    { "id": "all", "label": "All" },
-    { "id": "ml", "label": "ML" },
-    { "id": "algorithms", "label": "Algorithms" },
-    { "id": "systems", "label": "Systems" }
   ]
 }
