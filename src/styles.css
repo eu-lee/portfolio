@@ -63,7 +63,7 @@ button {
   --wire-bottom-inset: 48px;
   /* Height of the header row at the top of the inner frame, and the equal inset
      each header item keeps from the top wire and its nearest side wire. */
-  --nav-band: clamp(34px, min(4.4svh, 4.2vw), 50px);
+  --nav-band: clamp(44px, min(5.6svh, 5.4vw), 64px);
   --nav-pad: clamp(9px, min(1.15vw, 1.8svh), 16px);
   /* One viewport-driven overlay scale. The top-right nav, nameplate, contact
      row, and location label all follow the same width/height ratio. */
@@ -403,6 +403,10 @@ button {
 
 .hero-links {
   display: flex;
+  /* align-items:center on the band centers the line box, but this mono font seats
+     the glyphs ~0.08em below that center — nudge up so the word block reads
+     optically centered between the top wire and the nav-under divider. */
+  transform: translateY(-0.08em);
   /* Width is set inline to span the nav cell (divider -> right wire); space-evenly
      distributes all four gaps equally. gap stays 0 so it doesn't add to the
      between-word spacing and break that even distribution. */
@@ -903,7 +907,6 @@ h3 {
   border: 0;
   background: transparent;
   cursor: pointer;
-  transition: background 0.1s ease-out;
 }
 .projects-tile:hover { background: rgba(255, 255, 255, 0.1); }
 
