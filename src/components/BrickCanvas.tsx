@@ -26,6 +26,10 @@ type BrickCanvasProps = {
   focalX?: number;
   focalY?: number;
   mediaDarken?: number;
+  // Whether this canvas's route is on screen. When false the animated GIF redraw
+  // loop is frozen (the canvas keeps its last frame) so we don't burn CPU
+  // rendering a wall nobody can see.
+  active?: boolean;
 };
 
 function canvasContext(canvas: HTMLCanvasElement, options?: CanvasRenderingContext2DSettings) {
@@ -254,7 +258,8 @@ export function BrickCanvas({
   panStuds = 0,
   focalX = 0.5,
   focalY = 0.5,
-  mediaDarken = 0
+  mediaDarken = 0,
+  active = true
 }: BrickCanvasProps) {
   const kind = mediaKindFromSrc(src);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -507,14 +512,18 @@ export function BrickCanvas({
       const gifMedia = media as ComposedGif;
       let frameIndex = 0;
       const gifFrames = gifMedia.frames;
-      const drawNextGifFrame = () => {
-        if (stopped || gifFrames.length === 0) return;
-        const frame = gifFrames[frameIndex];
-        drawFrame(frame.source);
-        frameIndex = (frameIndex + 1) % gifFrames.length;
-        gifTimer = window.setTimeout(drawNextGifFrame, frame.delay);
-      };
-      drawNextGifFrame();
+      // Only animate while this route is on screen; off screen we leave the
+      // canvas frozen on its last frame instead of looping a hidden render.
+      if (active && gifFrames.length > 0) {
+        const drawNextGifFrame = () => {
+          if (stopped || gifFrames.length === 0) return;
+          const frame = gifFrames[frameIndex];
+          drawFrame(frame.source);
+          frameIndex = (frameIndex + 1) % gifFrames.length;
+          gifTimer = window.setTimeout(drawNextGifFrame, frame.delay);
+        };
+        drawNextGifFrame();
+      }
     } else if (kind === "video") {
       const videoMedia = media as VideoFrameElement;
       drawFrame(videoMedia);
@@ -547,7 +556,7 @@ export function BrickCanvas({
         cancelVideoFrame(videoFrame);
       }
     };
-  }, [grid, kind, ready, src, panStuds, focalX, focalY, mediaDarken]);
+  }, [grid, kind, ready, src, panStuds, focalX, focalY, mediaDarken, active]);
 
   // Position the fitted wall in CSS px and centre it; the leftover ring is the
   // border frame. (The canvas backing store is sized in device px above.)

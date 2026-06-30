@@ -1,6 +1,6 @@
 import type { CSSProperties, MouseEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { filters, projects, type FilterId, type Project } from "./data/projects";
+import { projects, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { BrickGrid } from "./components/BrickGrid";
 import { useStudGrid } from "./lib/heroGrid";
@@ -103,12 +103,6 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
     return () => observer.disconnect();
   }, [grid]);
 
-  const [activeFilter, setActiveFilter] = useState<FilterId>("all");
-  const visibleProjects = useMemo(() => {
-    if (activeFilter === "all") return projects;
-    return projects.filter((project) => project.category === activeFilter);
-  }, [activeFilter]);
-
   const count = String(projects.length).padStart(2, "0");
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
@@ -146,7 +140,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
       {/* BACKGROUND layer (under the frame): the mosaic. Home only — on projects
           it fades out, leaving the black field the wire box carves up. */}
       <div className={`page-bg${isProjects ? "" : " is-active"}`} aria-hidden={isProjects}>
-        <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} />
+        <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} active={!isProjects} />
       </div>
 
       {/* PERSISTENT wire box (drawn once, shared by both routes). Two layers: the
@@ -252,31 +246,11 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
         <div className="projects-field" style={fieldStyle}>
           <div className="projects-head">
             <h1 className="projects-title">Projects</h1>
-            <div className="projects-filters" role="tablist" aria-label="Project filter">
-              {filters.map((filter) => {
-                const n =
-                  filter.id === "all"
-                    ? projects.length
-                    : projects.filter((p) => p.category === filter.id).length;
-                return (
-                  <button
-                    className={`projects-filter${activeFilter === filter.id ? " is-active" : ""}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeFilter === filter.id}
-                    key={filter.id}
-                    onClick={() => setActiveFilter(filter.id)}
-                  >
-                    {filter.label} {n}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <div className="projects-scroll">
             <div className="projects-grid">
-              {visibleProjects.map((project, index) => (
+              {projects.map((project, index) => (
                 <button
                   key={project.id}
                   type="button"
@@ -313,12 +287,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
         </div>
 
         <div className="projects-rail" style={railStyle}>
-          <p className="projects-rail-eyebrow">Selected work</p>
-          <p className="projects-rail-meta">
-            {count} builds
-            <br />
-            algorithms · ml · systems
-          </p>
+          <p className="projects-rail-meta">{count} projects</p>
         </div>
       </div>
     </section>
