@@ -88,7 +88,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
       // Pick a comfortable gap; the cell holds the words plus four of them. Place
       // the divider that far left of the right wire, snapped to a stud seam, then
       // size the row to span the whole cell so the even spacing lands exactly.
-      const gap = Math.max(28, Math.min(72, grid.frame.rightPx * 0.038));
+      const gap = Math.max(22, Math.min(56, grid.frame.rightPx * 0.03));
       const desiredLeft = grid.frame.rightPx - (textWidth + 4 * gap);
       const seamIndex = Math.floor((desiredLeft - grid.frame.leftPx) / grid.size);
       const wireX = grid.frame.leftPx + seamIndex * grid.size;
