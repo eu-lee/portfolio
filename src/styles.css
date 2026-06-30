@@ -936,40 +936,42 @@ a.stage-kind:hover { text-decoration: underline; }
    The left side is the viewer, so the rail stays descriptive but scannable. */
 .projects-rail {
   --rail-item-h: 82px;
-  --rail-half: 41px;
   --rail-gap: 18px;
-  --rail-offset: 0px;
+  --rail-pad: 0px;
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
   bottom: var(--wire-bottom-inset);
   left: var(--wire-right); /* inline override snaps to the divider */
   z-index: 3;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-padding-block: var(--rail-pad);
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
   mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
 }
+.projects-rail::-webkit-scrollbar {
+  display: none;
+}
 
 .projects-rail-track {
-  position: absolute;
-  left: var(--nav-pad);
-  right: var(--nav-pad);
-  top: 50%;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--rail-gap);
-  transform: translateY(calc(-1 * var(--rail-offset) - var(--rail-half)));
-  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.projects-rail.is-scrolling .projects-rail-track {
-  transition: none;
+  min-height: 100%;
+  padding: var(--rail-pad) var(--nav-pad);
 }
 
 .rail-item {
+  flex: none;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: var(--rail-item-h);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
   text-align: left;
   font: inherit;
   color: inherit;

@@ -1,4 +1,4 @@
-import type { CSSProperties, KeyboardEvent, MouseEvent, WheelEvent as ReactWheelEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent, UIEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
@@ -7,9 +7,6 @@ import { useStudGrid } from "./lib/heroGrid";
 import heroBackground from "./assets/backgrounds/bkg4.gif";
 
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
-const RAIL_STEP = 100;
-const RAIL_SNAP_THRESHOLD = 58;
-const RAIL_DRAG_RESISTANCE = 0.48;
 
 function navigateTo(path: string) {
   window.history.pushState({}, "", path);
@@ -109,34 +106,66 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
   // The projects route is a stage + index rail: one active project shown large on
   // the left, every project listed on the right. Defaults to 01 on load.
   const [activeIndex, setActiveIndex] = useState(0);
-  const [railOffset, setRailOffset] = useState(0);
-  const [isRailScrolling, setIsRailScrolling] = useState(false);
+  const [railCenterPad, setRailCenterPad] = useState(0);
   const activeProject = projects[activeIndex];
   const railRef = useRef<HTMLElement | null>(null);
-  const railOffsetRef = useRef(0);
-  const railDragRef = useRef(0);
-  const railWheelResetRef = useRef<number | null>(null);
+  const railScrollResetRef = useRef<number | null>(null);
+  const projectButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     return () => {
-      if (railWheelResetRef.current != null) {
-        window.clearTimeout(railWheelResetRef.current);
+      if (railScrollResetRef.current != null) {
+        window.clearTimeout(railScrollResetRef.current);
       }
     };
   }, []);
 
-  const snapToProject = (index: number, focus = false) => {
+  useLayoutEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    const measure = () => {
+      const item = rail.querySelector<HTMLButtonElement>(".rail-item");
+      const itemHeight = item?.offsetHeight ?? 82;
+      setRailCenterPad(Math.max(0, (rail.clientHeight - itemHeight) / 2));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, [isProjects, navWireX]);
+
+  const scrollToProject = (index: number, focus = false) => {
     const next = Math.min(projects.length - 1, Math.max(0, index));
-    const offset = next * RAIL_STEP;
-    railDragRef.current = 0;
-    railOffsetRef.current = offset;
-    setRailOffset(offset);
     setActiveIndex(next);
+    projectButtonRefs.current[next]?.scrollIntoView({ block: "center", behavior: "smooth" });
 
     if (focus) {
-      const buttons = railRef.current?.querySelectorAll<HTMLButtonElement>("button");
-      buttons?.[next]?.focus();
+      projectButtonRefs.current[next]?.focus();
     }
+  };
+
+  const updateActiveFromRail = () => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    const railBox = rail.getBoundingClientRect();
+    const railCenter = railBox.top + railBox.height / 2;
+    let nearestIndex = activeIndex;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    projectButtonRefs.current.forEach((button, index) => {
+      if (!button) return;
+      const box = button.getBoundingClientRect();
+      const distance = Math.abs(box.top + box.height / 2 - railCenter);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    setActiveIndex(nearestIndex);
   };
 
   // Up/Down move the active project and carry focus with them; tab + enter on the
@@ -145,45 +174,17 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
     const dir = event.key === "ArrowDown" ? 1 : -1;
-    snapToProject(activeIndex + dir, true);
+    scrollToProject(activeIndex + dir, true);
   };
 
-  const onRailWheel = (event: ReactWheelEvent<HTMLElement>) => {
-    if (event.ctrlKey) return;
-    event.preventDefault();
-    event.stopPropagation();
-
-    const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * 80 : event.deltaY;
-    railDragRef.current += delta;
-
-    const baseOffset = activeIndex * RAIL_STEP;
-    const maxOffset = (projects.length - 1) * RAIL_STEP;
-    const edgeResistance =
-      (activeIndex === 0 && railDragRef.current < 0) ||
-      (activeIndex === projects.length - 1 && railDragRef.current > 0)
-        ? 0.22
-        : RAIL_DRAG_RESISTANCE;
-    const visualOffset = Math.min(
-      maxOffset,
-      Math.max(0, baseOffset + railDragRef.current * edgeResistance)
-    );
-    railOffsetRef.current = visualOffset;
-    setRailOffset(visualOffset);
-    setIsRailScrolling(true);
-
-    if (railWheelResetRef.current != null) {
-      window.clearTimeout(railWheelResetRef.current);
+  const onRailScroll = (_event: UIEvent<HTMLElement>) => {
+    if (railScrollResetRef.current != null) {
+      window.clearTimeout(railScrollResetRef.current);
     }
-    railWheelResetRef.current = window.setTimeout(() => {
-      const drag = railDragRef.current;
-      const snappedIndex =
-        Math.abs(drag) >= RAIL_SNAP_THRESHOLD
-          ? activeIndex + (drag > 0 ? 1 : -1)
-          : activeIndex;
-      railWheelResetRef.current = null;
-      setIsRailScrolling(false);
-      snapToProject(snappedIndex);
-    }, 120);
+    railScrollResetRef.current = window.setTimeout(() => {
+      railScrollResetRef.current = null;
+      updateActiveFromRail();
+    }, 90);
   };
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
@@ -212,9 +213,9 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
     f && navWireX != null
       ? { left: `${navWireX}px`, width: `${f.rightPx - navWireX}px` }
       : undefined;
-  const railTapeStyle = {
+  const railSnapStyle = {
     ...(railStyle ?? {}),
-    "--rail-offset": `${railOffset}px`
+    "--rail-pad": `${railCenterPad}px`
   } as CssVars;
 
   return (
@@ -320,9 +321,8 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
         <span className="hero-loc">
           <span className="hero-loc-place">
             {ICONS.pin}
-            Vancouver
+            Vancouver, BC
           </span>
-          <span>BC, Canada</span>
         </span>
       </div>
 
@@ -368,21 +368,24 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
         </div>
 
         <nav
-          className={`projects-rail${isRailScrolling ? " is-scrolling" : ""}`}
-          style={railTapeStyle}
+          className="projects-rail"
+          style={railSnapStyle}
           ref={railRef}
           onKeyDown={onRailKeyDown}
-          onWheel={onRailWheel}
+          onScroll={onRailScroll}
           aria-label="Project index"
         >
           <div className="projects-rail-track">
             {projects.map((project, index) => (
               <button
+                ref={(node) => {
+                  projectButtonRefs.current[index] = node;
+                }}
                 key={project.id}
                 type="button"
                 className={`rail-item${index === activeIndex ? " is-active" : ""}`}
                 aria-current={index === activeIndex}
-                onClick={() => snapToProject(index)}
+                onClick={() => scrollToProject(index)}
               >
                 <span className="rail-row">
                   <span className="rail-thumb">
