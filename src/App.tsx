@@ -3,7 +3,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { filters, projects, type FilterId, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { BrickGrid } from "./components/BrickGrid";
-import { ProjectCard } from "./components/ProjectCard";
 import { useStudGrid } from "./lib/heroGrid";
 import heroBackground from "./assets/backgrounds/bkg4.gif";
 
@@ -39,15 +38,26 @@ const ICONS = {
   )
 };
 
-function Hero() {
+type PortfolioProps = {
+  isProjects: boolean;
+  onOpenProject: (project: Project) => void;
+};
+
+// One persistent shell for both routes. The stud grid, wire frame, vignette and
+// nav are measured and drawn ONCE; navigating between home and projects never
+// redraws the wires. Instead the content is split into a background layer (the
+// mosaic, which sits under the frame) and a foreground layer (text / catalogue,
+// above the frame), and the layers for the two routes cross-fade — so the frame
+// stays put while only what fills it swaps.
+function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const linksRef = useRef<HTMLElement | null>(null);
   const grid = useStudGrid(heroRef);
 
-  // Load-in choreography: once the grid has resolved (so the wires land on their
-  // real positions, not the CSS fallbacks), flip on `is-intro-ready`, which kicks
-  // off the staged CSS animation — wires draw in, then the mosaic + text fade up.
-  // Guarded so a resize re-measure doesn't replay it.
+  // First-load choreography (once): when the grid resolves so the wires land on
+  // their real positions, flip on `is-intro-ready` to play the staged wire-draw
+  // + fade-up. Guarded so a resize re-measure — or a later route change — never
+  // replays it; from then on the frame persists and routes just cross-fade.
   const [introReady, setIntroReady] = useState(false);
   const introPlayedRef = useRef(false);
   useEffect(() => {
@@ -93,6 +103,14 @@ function Hero() {
     return () => observer.disconnect();
   }, [grid]);
 
+  const [activeFilter, setActiveFilter] = useState<FilterId>("all");
+  const visibleProjects = useMemo(() => {
+    if (activeFilter === "all") return projects;
+    return projects.filter((project) => project.category === activeFilter);
+  }, [activeFilter]);
+
+  const count = String(projects.length).padStart(2, "0");
+
   // Position the wire box + the text on the exact stud lines the grid resolved,
   // so the frame and the studs share boundaries. Falls back to the CSS defaults
   // for the first paint before the grid is measured.
@@ -108,19 +126,34 @@ function Hero() {
       }
     : undefined;
 
+  // The projects field spans from the left wire to the vertical divider; the
+  // right rail occupies the cell beyond it. Both start under the nav-band.
+  const fieldStyle: CSSProperties | undefined =
+    f && navWireX != null
+      ? { left: `${f.leftPx}px`, width: `${navWireX - f.leftPx}px` }
+      : undefined;
+  const railStyle: CSSProperties | undefined =
+    f && navWireX != null
+      ? { left: `${navWireX}px`, width: `${f.rightPx - navWireX}px` }
+      : undefined;
+
   return (
     <section
-      className={`hero is-intro${introReady ? " is-intro-ready" : ""}`}
+      className={`hero${isProjects ? " is-projects" : " is-home"} is-intro${introReady ? " is-intro-ready" : ""}`}
       ref={heroRef}
       style={frameVars}
     >
-      <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} />
+      {/* BACKGROUND layer (under the frame): the mosaic. Home only — on projects
+          it fades out, leaving the black field the wire box carves up. */}
+      <div className={`page-bg${isProjects ? "" : " is-active"}`} aria-hidden={isProjects}>
+        <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} />
+      </div>
 
-      {/* White wire box. Two layers: the extension layer sweeps in full-bleed
-          across the black border to the screen edges during the load-in, then
-          dissolves away; the core layer is the bounded square (stopping at the
-          frame corners) that settles in and stays. The is-nav-down wire drops
-          just left of the nav links, dividing off the header's right cell. */}
+      {/* PERSISTENT wire box (drawn once, shared by both routes). Two layers: the
+          extension layer sweeps in full-bleed across the black border during the
+          load-in, then dissolves; the core layer is the bounded square that stays.
+          The is-nav-down wire drops just left of the nav links, fencing the right
+          cell. */}
       <div className="hero-frame" aria-hidden="true">
         <span className="frame-line is-ext is-top" />
         <span className="frame-line is-ext is-bottom" />
@@ -141,7 +174,8 @@ function Hero() {
         )}
       </div>
 
-      {/* Top strip: section links on the right. */}
+      {/* PERSISTENT top strip: section links, right-aligned. The active link
+          tracks the route; the strip itself never re-fades after the intro. */}
       <header className="hero-nav">
         <nav
           className="hero-links"
@@ -150,7 +184,7 @@ function Hero() {
         >
           <a
             href="/"
-            className="is-active"
+            className={isProjects ? undefined : "is-active"}
             onClick={(event) => {
               event.preventDefault();
               navigateTo("/");
@@ -169,6 +203,7 @@ function Hero() {
           </a>
           <a
             href="/projects"
+            className={isProjects ? "is-active" : undefined}
             onClick={(event) => {
               event.preventDefault();
               navigateTo("/projects");
@@ -179,82 +214,112 @@ function Hero() {
         </nav>
       </header>
 
-      {/* Name, tagline and socials, anchored bottom-left over the pixels. */}
-      <div className="hero-content">
-        <h1 className="hero-name">Eugene Lee</h1>
-        <p className="hero-tagline">
-          I study Software Engineering at the University of Waterloo. I'm interested in hard problems and algorithms. My current work at Eureka DevSecOps revolves around building agents for automated code vulnerability remediation.
-        </p>
-        <div className="hero-socials">
+      {/* FOREGROUND home layer (above the frame): name, tagline, socials,
+          location. Cross-fades with the projects layer below. */}
+      <div className={`page-fg page-home${isProjects ? "" : " is-active"}`} aria-hidden={isProjects}>
+        <div className="hero-content">
+          <h1 className="hero-name">Eugene Lee</h1>
+          <p className="hero-tagline">
+            I study Software Engineering at the University of Waterloo. I'm interested in hard problems and algorithms. My current work at Eureka DevSecOps revolves around building agents for automated code vulnerability remediation.
+          </p>
+          <div className="hero-socials">
 
-          Feel free to connect with me through:
-          <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
-            {ICONS.github}
-          </a>
-          <a href="https://www.linkedin.com/in/eu-lee/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
-            {ICONS.linkedin}
-          </a>
-          <a href="mailto:eugene.lee@uwaterloo.ca" aria-label="Email">
-            {ICONS.mail}
-          </a>
+            Feel free to connect with me through:
+            <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
+              {ICONS.github}
+            </a>
+            <a href="https://www.linkedin.com/in/eu-lee/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+              {ICONS.linkedin}
+            </a>
+            <a href="mailto:eugene.lee@uwaterloo.ca" aria-label="Email">
+              {ICONS.mail}
+            </a>
+          </div>
         </div>
-      </div>
 
-      {/* Location label, right-aligned in the bottom-right corner of the frame. */}
-      <span className="hero-loc">
-        <span className="hero-loc-place">
-          {ICONS.pin}
-          Vancouver
+        <span className="hero-loc">
+          <span className="hero-loc-place">
+            {ICONS.pin}
+            Vancouver
+          </span>
+          <span>BC, Canada</span>
         </span>
-        <span>BC, Canada</span>
-      </span>
-    </section>
-  );
-}
-
-type ProjectsProps = {
-  onOpenProject: (project: Project) => void;
-};
-
-function Projects({ onOpenProject }: ProjectsProps) {
-  const [activeFilter, setActiveFilter] = useState<FilterId>("all");
-  const visibleProjects = useMemo(() => {
-    if (activeFilter === "all") return projects;
-    return projects.filter((project) => project.category === activeFilter);
-  }, [activeFilter]);
-
-  return (
-    <section className="section projects-page">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Selected work</p>
-          <h2>Brick covers, real project details.</h2>
-        </div>
-        <a className="back-link" href="/" onClick={(event) => {
-          event.preventDefault();
-          navigateTo("/");
-        }}>
-          Home
-        </a>
-        <div className="filter-group" role="tablist" aria-label="Project filter">
-          {filters.map((filter) => (
-            <button
-              className={`filter${activeFilter === filter.id ? " is-active" : ""}`}
-              type="button"
-              role="tab"
-              aria-selected={activeFilter === filter.id}
-              key={filter.id}
-              onClick={() => setActiveFilter(filter.id)}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
       </div>
-      <div className="project-grid">
-        {visibleProjects.map((project) => (
-          <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />
-        ))}
+
+      {/* FOREGROUND projects layer (above the frame): the LEFT field (title +
+          filters + scrolling catalogue) and the RIGHT cell (eyebrow + meta). */}
+      <div className={`page-fg page-projects${isProjects ? " is-active" : ""}`} aria-hidden={!isProjects}>
+        <div className="projects-field" style={fieldStyle}>
+          <div className="projects-head">
+            <h1 className="projects-title">Projects</h1>
+            <div className="projects-filters" role="tablist" aria-label="Project filter">
+              {filters.map((filter) => {
+                const n =
+                  filter.id === "all"
+                    ? projects.length
+                    : projects.filter((p) => p.category === filter.id).length;
+                return (
+                  <button
+                    className={`projects-filter${activeFilter === filter.id ? " is-active" : ""}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeFilter === filter.id}
+                    key={filter.id}
+                    onClick={() => setActiveFilter(filter.id)}
+                  >
+                    {filter.label} {n}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="projects-scroll">
+            <div className="projects-grid">
+              {visibleProjects.map((project, index) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  className="projects-tile"
+                  onClick={() => onOpenProject(project)}
+                >
+                  <div className="projects-tile-top">
+                    <span className="projects-tile-num">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span
+                      className="projects-tile-kind"
+                      style={{ color: `var(--${project.accent})` }}
+                    >
+                      {project.kind}
+                    </span>
+                  </div>
+                  <div className="projects-tile-cover">
+                    {project.cover ? (
+                      <img src={project.cover} alt={`${project.title} cover`} />
+                    ) : (
+                      <BrickGrid type={project.board} width={18} height={8} />
+                    )}
+                  </div>
+                  <div className="projects-tile-foot">
+                    <span className="projects-tile-title">{project.title}</span>
+                    <span className="projects-tile-open">open ▸</span>
+                  </div>
+                  <span className="projects-tile-sub">{project.subtitle}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="projects-rail" style={railStyle}>
+          <p className="projects-rail-eyebrow">Selected work</p>
+          <p className="projects-rail-meta">
+            {count} builds
+            <br />
+            algorithms · ml · systems
+          </p>
+        </div>
       </div>
     </section>
   );
@@ -342,11 +407,7 @@ export default function App() {
   return (
     <>
       <main className={isProjectsPage ? "app-shell projects-shell" : "app-shell home-shell"}>
-        {isProjectsPage ? (
-          <Projects onOpenProject={setSelectedProject} />
-        ) : (
-          <Hero />
-        )}
+        <Portfolio isProjects={isProjectsPage} onOpenProject={setSelectedProject} />
       </main>
       <ProjectDialog project={selectedProject} onClose={() => setSelectedProject(null)} />
     </>
