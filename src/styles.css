@@ -620,6 +620,7 @@ h3 {
   display: grid;
   background: rgba(0, 0, 0, .18);
   transition: opacity .35s ease;
+  contain: layout paint style;
 }
 
 .brick-cell {
@@ -931,78 +932,122 @@ a.stage-kind:hover { text-decoration: underline; }
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
 
-/* RIGHT index rail beyond the vertical divider: every project as a navigable
-   item (thumb over number + name). The active item shows its thumbnail in full
-   colour; the rest are desaturated + dimmed so the column reads as a menu. */
+/* RIGHT index rail beyond the vertical divider: a compact project navigation.
+   The left side is the viewer, so the rail stays descriptive but scannable. */
 .projects-rail {
+  --rail-item-h: 82px;
+  --rail-half: 41px;
+  --rail-gap: 18px;
+  --rail-offset: 0px;
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
   bottom: var(--wire-bottom-inset);
   left: var(--wire-right); /* inline override snaps to the divider */
   z-index: 3;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+}
+
+.projects-rail-track {
+  position: absolute;
+  left: var(--nav-pad);
+  right: var(--nav-pad);
+  top: 50%;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: clamp(14px, 2svh, 24px) var(--nav-pad);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #4a5155 transparent;
+  gap: var(--rail-gap);
+  transform: translateY(calc(-1 * var(--rail-offset) - var(--rail-half)));
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.projects-rail.is-scrolling .projects-rail-track {
+  transition: none;
 }
 
 .rail-item {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   width: 100%;
+  height: var(--rail-item-h);
   text-align: left;
   font: inherit;
   color: inherit;
-  padding: 16px var(--nav-pad);
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  opacity: 0.45;
-  transition: opacity 0.2s ease, background 0.2s ease;
+  opacity: 0.58;
+  transition: opacity 0.12s ease, transform 0.18s ease;
 }
-.rail-item:hover { opacity: 0.8; background: rgba(255, 255, 255, 0.06); }
-.rail-item.is-active { opacity: 1; }
+.rail-item:hover,
+.rail-item.is-active {
+  opacity: 1;
+  transform: translateX(3px);
+}
 .rail-item:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.5);
   outline-offset: -1px;
 }
 
+/* Collapsed row: small landscape thumb + number/name to its right. */
+.rail-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 100%;
+}
 .rail-thumb {
-  width: 100%;
-  aspect-ratio: 12 / 6;
+  position: relative;
+  flex: none;
+  width: 62px;
+  aspect-ratio: 1;
   overflow: hidden;
-  border-radius: 3px;
+  border: 1px solid #8b9296;
+  border-radius: 0;
   background: var(--dark);
-  filter: grayscale(1) brightness(0.85);
-  transition: filter 0.2s ease;
+  contain: layout paint;
 }
 .rail-thumb > * { width: 100%; height: 100%; }
 .rail-thumb img { display: block; object-fit: cover; }
-.rail-item.is-active .rail-thumb { filter: none; }
+.brick-thumb-image { user-select: none; }
 
-.rail-text {
+.rail-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.rail-heading {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-}
-.rail-num {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
-  color: #8b9296;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  min-width: 0;
 }
 .rail-name {
   font-family: "Archivo", system-ui, sans-serif;
   font-weight: 800;
   font-size: 15px;
   letter-spacing: -0.005em;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.55);
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
 }
+
+.rail-summary {
+  display: -webkit-box;
+  max-width: 28ch;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.46);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Active row: white name and clearer description. */
+.rail-item.is-active .rail-name { color: #fff; }
+.rail-item.is-active .rail-summary { color: rgba(255, 255, 255, 0.64); }
 
 /* Join the intro choreography: the field + right cell fade up with the same
    timing the hero uses for its text. */

@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { memo, useMemo, type CSSProperties } from "react";
 import { legoColor, type LegoColor, rgba } from "../data/legoColors";
 import type { BoardType } from "../data/projects";
 
@@ -87,10 +87,44 @@ type BrickGridProps = {
   height?: number;
 };
 
-export function BrickGrid({ type, width = 20, height = 14 }: BrickGridProps) {
+function boardImageDataUri(type: BoardType, width: number, height: number) {
+  const cell = 12;
+  const studRadius = cell * 0.3;
+  const cells = boardColors(type, width, height);
+  const body = cells
+    .map((color, index) => {
+      const x = (index % width) * cell;
+      const y = Math.floor(index / width) * cell;
+      const cx = x + cell / 2;
+      const cy = y + cell / 2;
+
+      return [
+        `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${color.value}"/>`,
+        `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#fff" opacity="0.08"/>`,
+        `<path d="M${x} ${y + cell}h${cell}v-${cell}" fill="none" stroke="#000" stroke-opacity="0.22" stroke-width="1"/>`,
+        `<circle cx="${cx}" cy="${cy}" r="${studRadius}" fill="${color.value}" stroke="${color.edge}" stroke-opacity="0.6" stroke-width="0.8"/>`,
+        `<circle cx="${cx - cell * 0.08}" cy="${cy - cell * 0.09}" r="${studRadius * 0.68}" fill="#fff" opacity="0.1"/>`
+      ].join("");
+    })
+    .join("");
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width * cell} ${height * cell}" width="${width * cell}" height="${height * cell}">${body}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+export const BrickThumb = memo(function BrickThumb({ type, width = 12, height = 8 }: BrickGridProps) {
+  const src = useMemo(() => boardImageDataUri(type, width, height), [type, width, height]);
+
+  return <img className="brick-thumb-image" src={src} alt="" draggable={false} />;
+});
+
+export const BrickGrid = memo(function BrickGrid({ type, width = 20, height = 14 }: BrickGridProps) {
+  const cells = useMemo(() => boardColors(type, width, height), [type, width, height]);
+  const style = useMemo(() => ({ gridTemplateColumns: `repeat(${width}, 1fr)` }), [width]);
+
   return (
-    <div className="brick-grid" style={{ gridTemplateColumns: `repeat(${width}, 1fr)` }}>
-      {boardColors(type, width, height).map((color, index) => (
+    <div className="brick-grid" style={style}>
+      {cells.map((color, index) => (
         <span
           className="brick-cell"
           style={{
@@ -107,4 +141,4 @@ export function BrickGrid({ type, width = 20, height = 14 }: BrickGridProps) {
       ))}
     </div>
   );
-}
+});
