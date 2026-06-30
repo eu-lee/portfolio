@@ -612,35 +612,6 @@ h3 {
   gap: 22px;
 }
 
-.project-card {
-  min-width: 0;
-}
-
-.project-cover {
-  position: relative;
-  display: grid;
-  width: 100%;
-  aspect-ratio: 16 / 11;
-  overflow: hidden;
-  border: 0;
-  border-radius: 6px;
-  background: var(--dark);
-  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .5);
-  cursor: pointer;
-}
-
-.brick-grid,
-.project-cover .cover-image,
-.project-reveal {
-  grid-area: 1 / 1;
-}
-
-.project-cover .cover-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .brick-grid {
   display: grid;
   background: rgba(0, 0, 0, .18);
@@ -705,75 +676,6 @@ h3 {
     0 .035em 0 rgba(0,0,0,.16),
     0 0 .02em rgba(255,255,255,.08);
   user-select: none;
-}
-
-.project-reveal {
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  color: #fff;
-  text-align: center;
-  opacity: 0;
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 50%, transparent), transparent 42%),
-    repeating-linear-gradient(45deg, color-mix(in srgb, var(--accent) 34%, #10161B) 0 8px, #10161B 8px 17px);
-  transition: opacity .35s ease;
-}
-
-.project-cover .cover-image {
-  transition: opacity .35s ease;
-}
-
-.project-cover:hover .brick-grid,
-.project-cover:focus-visible .brick-grid,
-.project-card.is-featured .brick-grid,
-.project-cover:hover .cover-image,
-.project-cover:focus-visible .cover-image,
-.project-card.is-featured .cover-image {
-  opacity: 0;
-}
-
-.project-cover:hover .project-reveal,
-.project-cover:focus-visible .project-reveal,
-.project-card.is-featured .project-reveal {
-  opacity: 1;
-}
-
-.project-kind,
-.project-open {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-}
-
-.project-kind {
-  color: var(--accent);
-}
-
-.project-open {
-  display: block;
-  margin-top: 10px;
-  color: #AEB5B0;
-}
-
-.project-reveal strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 20px;
-  line-height: 1.1;
-}
-
-.project-card h3 {
-  margin: 14px 0 4px;
-  font-size: 18px;
-}
-
-.project-card p {
-  margin: 0;
-  color: #727A75;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
 }
 
 .dialog-backdrop {
@@ -998,9 +900,10 @@ h3 {
   font: inherit;
   color: inherit;
   padding: 26px var(--nav-pad) 28px;
+  border: 0;
   background: transparent;
   cursor: pointer;
-  transition: background 0.08s ease;
+  transition: background 0.1s ease-out;
 }
 .projects-tile:hover { background: rgba(255, 255, 255, 0.1); }
 
