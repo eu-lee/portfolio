@@ -1,4 +1,4 @@
-import type { CSSProperties, MouseEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
@@ -103,7 +103,23 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
     return () => observer.disconnect();
   }, [grid]);
 
-  const count = String(projects.length).padStart(2, "0");
+  // The projects route is a stage + index rail: one active project shown large on
+  // the left, every project listed on the right. Defaults to 01 on load.
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeProject = projects[activeIndex];
+  const railRef = useRef<HTMLElement | null>(null);
+
+  // Up/Down move the active project and carry focus with them; tab + enter on the
+  // individual buttons works on its own.
+  const onRailKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const dir = event.key === "ArrowDown" ? 1 : -1;
+    const next = (activeIndex + dir + projects.length) % projects.length;
+    setActiveIndex(next);
+    const buttons = railRef.current?.querySelectorAll<HTMLButtonElement>("button");
+    buttons?.[next]?.focus();
+  };
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
   // so the frame and the studs share boundaries. Falls back to the CSS defaults
@@ -120,8 +136,9 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
       }
     : undefined;
 
-  // The projects field spans from the left wire to the vertical divider; the
-  // right rail occupies the cell beyond it. Both start under the nav-band.
+  // The wire box is shared with the hero and never moves: the stage spans from the
+  // left wire to the same nav divider the hero measured, and the index rail
+  // occupies the cell beyond it. Both start under the nav-band.
   const fieldStyle: CSSProperties | undefined =
     f && navWireX != null
       ? { left: `${f.leftPx}px`, width: `${navWireX - f.leftPx}px` }
@@ -240,55 +257,76 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
         </span>
       </div>
 
-      {/* FOREGROUND projects layer (above the frame): the LEFT field (title +
-          filters + scrolling catalogue) and the RIGHT cell (eyebrow + meta). */}
+      {/* FOREGROUND projects layer (above the frame): the LEFT stage (the active
+          project, large) and the RIGHT index rail (every project, navigable). */}
       <div className={`page-fg page-projects${isProjects ? " is-active" : ""}`} aria-hidden={!isProjects}>
-        <div className="projects-field" style={fieldStyle}>
-          <div className="projects-head">
-            <h1 className="projects-title">Projects</h1>
+        <div className="projects-stage" style={fieldStyle}>
+          <div className="stage-cover">
+            {activeProject.cover ? (
+              <img src={activeProject.cover} alt={`${activeProject.title} cover`} />
+            ) : (
+              <BrickGrid type={activeProject.board} width={24} height={12} />
+            )}
           </div>
 
-          <div className="projects-scroll">
-            <div className="projects-grid">
-              {projects.map((project, index) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  className="projects-tile"
-                  onClick={() => onOpenProject(project)}
+          <div className="stage-meta">
+            <div className="stage-top">
+              <span className="stage-num">{String(activeIndex + 1).padStart(2, "0")}</span>
+              {activeProject.links?.[0] ? (
+                <a
+                  className="stage-kind"
+                  style={{ color: `var(--${activeProject.accent})` }}
+                  href={activeProject.links[0].href}
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  <div className="projects-tile-top">
-                    <span className="projects-tile-num">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span
-                      className="projects-tile-kind"
-                      style={{ color: `var(--${project.accent})` }}
-                    >
-                      {project.kind}
-                    </span>
-                  </div>
-                  <div className="projects-tile-cover">
-                    {project.cover ? (
-                      <img src={project.cover} alt={`${project.title} cover`} />
-                    ) : (
-                      <BrickGrid type={project.board} width={18} height={8} />
-                    )}
-                  </div>
-                  <div className="projects-tile-foot">
-                    <span className="projects-tile-title">{project.title}</span>
-                    <span className="projects-tile-open">open ▸</span>
-                  </div>
-                  <span className="projects-tile-sub">{project.subtitle}</span>
-                </button>
+                  {activeProject.kind}
+                </a>
+              ) : (
+                <span className="stage-kind" style={{ color: `var(--${activeProject.accent})` }}>
+                  {activeProject.kind}
+                </span>
+              )}
+            </div>
+            <h1 className="stage-title">{activeProject.title}</h1>
+            <p className="stage-sub">{activeProject.subtitle}</p>
+            <div className="stage-stack">
+              {activeProject.stack.map((item) => (
+                <span key={item}>{item}</span>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="projects-rail" style={railStyle}>
-          <p className="projects-rail-meta">{count} projects</p>
-        </div>
+        <nav
+          className="projects-rail"
+          style={railStyle}
+          ref={railRef}
+          onKeyDown={onRailKeyDown}
+          aria-label="Project index"
+        >
+          {projects.map((project, index) => (
+            <button
+              key={project.id}
+              type="button"
+              className={`rail-item${index === activeIndex ? " is-active" : ""}`}
+              aria-current={index === activeIndex}
+              onClick={() => setActiveIndex(index)}
+            >
+              <span className="rail-thumb">
+                {project.cover ? (
+                  <img src={project.cover} alt="" />
+                ) : (
+                  <BrickGrid type={project.board} width={12} height={6} />
+                )}
+              </span>
+              <span className="rail-text">
+                <span className="rail-num">{String(index + 1).padStart(2, "0")}</span>
+                <span className="rail-name">{project.title}</span>
+              </span>
+            </button>
+          ))}
+        </nav>
       </div>
     </section>
   );

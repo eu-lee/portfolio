@@ -837,9 +837,10 @@ h3 {
   height: 100svh;
 }
 
-/* LEFT field: bounded by the left wire and the vertical nav divider (left/width
-   set inline from the measured divider X), under the nav-band divider. */
-.projects-field {
+/* LEFT stage: the single active project, large. Bounded by the left wire and the
+   vertical index divider (left/width set inline from the measured divider X). The
+   brick cover is the centerpiece; the metadata stacks beneath it. */
+.projects-stage {
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
   bottom: var(--wire-bottom-inset);
@@ -847,138 +848,92 @@ h3 {
   z-index: 3;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-}
-
-.projects-head {
-  flex: none;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  padding: clamp(18px, 2.4svh, 30px) var(--nav-pad) clamp(13px, 1.8svh, 22px);
-  border-bottom: 1px solid rgba(139, 146, 150, 0.4);
-}
-.projects-title {
-  margin: 0;
-  font-family: "Archivo", system-ui, sans-serif;
-  font-weight: 900;
-  font-size: clamp(34px, 5vw, 60px);
-  line-height: 0.86;
-  letter-spacing: -0.01em;
-  color: #fff;
-  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
-}
-
-/* Only the catalogue scrolls; the nav, title/filters and right cell stay pinned —
-   the frame itself never moves (same single-viewport feel as the hero). */
-.projects-scroll {
-  flex: 1;
+  justify-content: center;
+  gap: clamp(20px, 3.4svh, 40px);
+  padding: clamp(20px, 3svh, 46px) clamp(24px, 4vw, 64px);
   min-height: 0;
   overflow-y: auto;
-  touch-action: pan-y;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #4a5155 transparent;
-}
-.projects-scroll::-webkit-scrollbar { width: 9px; }
-.projects-scroll::-webkit-scrollbar-track { background: transparent; }
-.projects-scroll::-webkit-scrollbar-thumb {
-  background: #4a5155;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  border-radius: 6px;
-}
-.projects-scroll::-webkit-scrollbar-thumb:hover { background: #5b6266; }
-
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
 }
 
-.projects-tile {
-  position: relative;
-  display: block;
+/* Solid dark plate so the brick board reads as a thumbnail against it, not
+   against the brick wall behind the frame (same treatment the tiles used). */
+.stage-cover {
   width: 100%;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  padding: 26px var(--nav-pad) 28px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-.projects-tile:hover { background: rgba(255, 255, 255, 0.1); }
-
-.projects-tile-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.projects-tile-num {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
-  color: #8b9296;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-}
-.projects-tile-kind {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-}
-
-/* Cover gets a solid dark plate so the brick board reads as a thumbnail against
-   it, not against the brick wall behind the frame. */
-.projects-tile-cover {
-  width: 100%;
-  aspect-ratio: 18 / 8;
+  max-width: min(640px, 100%);
+  aspect-ratio: 24 / 12;
+  align-self: center;
   overflow: hidden;
   border-radius: 4px;
   background: var(--dark);
 }
-.projects-tile-cover > * { width: 100%; height: 100%; }
-.projects-tile-cover img { display: block; object-fit: cover; }
+.stage-cover > * { width: 100%; height: 100%; }
+.stage-cover img { display: block; object-fit: cover; }
 
-.projects-tile-foot {
+.stage-meta {
+  align-self: center;
+  width: 100%;
+  max-width: min(640px, 100%);
+}
+
+.stage-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 16px;
+  margin-bottom: 14px;
 }
-.projects-tile-title {
+.stage-num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  color: #8b9296;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+.stage-kind {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+a.stage-kind:hover { text-decoration: underline; }
+
+.stage-title {
+  margin: 0;
   font-family: "Archivo", system-ui, sans-serif;
-  font-weight: 800;
-  font-size: 22px;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
+  font-weight: 900;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: 0.9;
+  letter-spacing: -0.015em;
   color: #fff;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
 }
-.projects-tile-open {
+.stage-sub {
+  margin: 14px 0 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
-  color: #fff;
-  opacity: 0;
-  transition: opacity 0.18s ease;
-  flex: none;
-}
-.projects-tile:hover .projects-tile-open { opacity: 1; }
-.projects-tile-sub {
-  display: block;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 12px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
   color: #aab0b3;
-  margin-top: 6px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+.stage-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 20px;
+}
+.stage-stack span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
 
-/* RIGHT cell beyond the vertical divider — mirrors the hero's nav-top /
-   location-bottom right cell: eyebrow pinned top, meta pinned bottom, both
-   right-aligned like the location label. */
+/* RIGHT index rail beyond the vertical divider: every project as a navigable
+   item (thumb over number + name). The active item shows its thumbnail in full
+   colour; the rest are desaturated + dimmed so the column reads as a menu. */
 .projects-rail {
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
@@ -987,43 +942,89 @@ h3 {
   z-index: 3;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: clamp(18px, 2.4svh, 30px) var(--nav-pad) calc(var(--nav-pad) + 2px);
-  text-align: right;
+  gap: 4px;
+  padding: clamp(14px, 2svh, 24px) var(--nav-pad);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4a5155 transparent;
 }
-.projects-rail-meta {
-  margin: 0;
+
+.rail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 16px var(--nav-pad);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+.rail-item:hover { opacity: 0.8; background: rgba(255, 255, 255, 0.06); }
+.rail-item.is-active { opacity: 1; }
+.rail-item:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -1px;
+}
+
+.rail-thumb {
+  width: 100%;
+  aspect-ratio: 12 / 6;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--dark);
+  filter: grayscale(1) brightness(0.85);
+  transition: filter 0.2s ease;
+}
+.rail-thumb > * { width: 100%; height: 100%; }
+.rail-thumb img { display: block; object-fit: cover; }
+.rail-item.is-active .rail-thumb { filter: none; }
+
+.rail-text {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.rail-num {
   font-family: "IBM Plex Mono", monospace;
-  font-size: var(--hero-meta-size);
-  line-height: 1.7;
-  letter-spacing: var(--hero-meta-spacing);
-  color: rgba(255, 255, 255, 0.6);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+  color: #8b9296;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+.rail-name {
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
 }
 
 /* Join the intro choreography: the field + right cell fade up with the same
    timing the hero uses for its text. */
-.hero.is-intro .projects-field,
+.hero.is-intro .projects-stage,
 .hero.is-intro .projects-rail {
   opacity: 0;
 }
-.hero.is-intro-ready .projects-field,
+.hero.is-intro-ready .projects-stage,
 .hero.is-intro-ready .projects-rail {
   animation: hero-fade-in var(--intro-fade) ease-out var(--intro-text-delay) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero.is-intro .projects-field,
+  .hero.is-intro .projects-stage,
   .hero.is-intro .projects-rail {
     opacity: 1;
     animation: none;
   }
 }
 
-/* Narrow screens: single-column catalogue; the frame stays viewport-locked so the
+/* Narrow screens: shrink the stage title; the frame stays viewport-locked so the
    shared brick wall keeps covering it (same as the hero). */
 @media (max-width: 760px) {
-  .projects-grid { grid-template-columns: 1fr; }
-  .projects-title { font-size: clamp(30px, 9vw, 44px); }
+  .stage-title { font-size: clamp(28px, 8vw, 44px); }
 }
