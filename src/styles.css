@@ -183,7 +183,7 @@ button {
   --intro-text-delay: 1.1s; /* text, once the mosaic is up */
   --intro-wire-fade: 0.5s; /* extensions dissolve away */
   --intro-wire-fade-delay: 1.1s; /* once the square has settled */
-  --page-fade: 0.22s; /* home <-> projects route cross-fade */
+  --page-fade: 0.14s; /* home <-> projects route cross-fade */
 }
 
 @keyframes wire-draw-y {
@@ -226,8 +226,7 @@ button {
 .hero.is-intro .frame-line.is-core,
 .hero.is-intro .brick-canvas,
 .hero.is-intro .hero-nav,
-.hero.is-intro .hero-content,
-.hero.is-intro .hero-loc {
+.hero.is-intro .hero-content {
   opacity: 0;
 }
 
@@ -259,8 +258,7 @@ button {
 }
 
 .hero.is-intro-ready .hero-nav,
-.hero.is-intro-ready .hero-content,
-.hero.is-intro-ready .hero-loc {
+.hero.is-intro-ready .hero-content {
   animation: hero-fade-in var(--intro-fade) ease-out var(--intro-text-delay) both;
 }
 
@@ -270,8 +268,7 @@ button {
   .hero.is-intro .frame-line.is-core,
   .hero.is-intro .brick-canvas,
   .hero.is-intro .hero-nav,
-  .hero.is-intro .hero-content,
-  .hero.is-intro .hero-loc {
+  .hero.is-intro .hero-content {
     transform: none;
     opacity: 1;
     animation: none;
@@ -300,7 +297,7 @@ button {
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--page-fade, 0.22s) ease;
+  transition: opacity var(--page-fade, 0.14s) ease;
   /* Promote each route layer to its own GPU compositor layer so the cross-fade is
      a pure compositor opacity animation. Without this the layer repaints on the
      main thread, and the hero's continuous canvas redraw stalls the fade (it gets
@@ -362,43 +359,6 @@ button {
   line-height: 1;
   letter-spacing: .14em;
   text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
-}
-
-/* Location label anchored to the bottom-right corner of the frame, right-aligned
-   over two lines (Vancouver / BC). Same inset as the bottom-left content block. */
-.hero-loc {
-  position: absolute;
-  right: var(--wire-right-inset);
-  bottom: var(--wire-bottom-inset);
-  z-index: 3;
-  padding: 0 var(--nav-pad) var(--nav-pad);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: var(--hero-meta-size);
-  line-height: 1.1;
-  letter-spacing: var(--hero-meta-spacing);
-  text-align: right;
-  color: rgba(255, 255, 255, .8);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
-}
-
-.hero-loc-place {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Second line (BC) dimmed, matching the unselected nav links. */
-.hero-loc > span:last-child {
-  color: rgba(255, 255, 255, .6);
-}
-
-.hero-loc svg {
-  width: clamp(13px, min(1.2vw, 1.9svh), 15px);
-  height: clamp(13px, min(1.2vw, 1.9svh), 15px);
 }
 
 .hero-links {
@@ -466,7 +426,7 @@ button {
 .hero-socials {
   display: flex;
   /* Bottom-align the contact text + icons so the text sits on the frame's bottom
-     inset — the same line as the right-aligned location label (Vancouver / BC). */
+     inset. */
   align-items: flex-end;
   gap: var(--hero-social-gap);
   font-size: var(--hero-contact-size);
@@ -795,14 +755,6 @@ h3 {
 
   .hero-tagline {
     max-width: 42ch;
-  }
-
-  .hero-loc {
-    gap: 2px;
-  }
-
-  .hero-loc-place {
-    gap: 5px;
   }
 
   .hero-socials {
