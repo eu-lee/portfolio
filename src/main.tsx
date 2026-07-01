@@ -1,3 +1,4 @@
+import "./bufferShim"; // must stay first — sets up Buffer before content loads
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";

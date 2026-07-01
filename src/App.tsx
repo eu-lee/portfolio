@@ -115,6 +115,12 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   const railRef = useRef<HTMLElement | null>(null);
   const railRafRef = useRef<number | null>(null);
   const projectButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  // Set while a click/keyboard selection is smooth-scrolling the rail. During
+  // that glide the scroll sweeps past every entry in between; without this guard
+  // updateActiveFromRail would flip activeIndex (and re-render the heavy stage
+  // board) for each one. We hold the target until the scroll lands on it.
+  const railGlideRef = useRef(false);
+  const railGlideTimer = useRef<number | null>(null);
 
   // Keep a ref mirror of the active index so the scroll/key handlers read the
   // latest value without being re-created (and re-bound) every render.
@@ -123,6 +129,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   useEffect(() => {
     return () => {
       if (railRafRef.current != null) cancelAnimationFrame(railRafRef.current);
+      if (railGlideTimer.current != null) clearTimeout(railGlideTimer.current);
     };
   }, []);
 
@@ -133,6 +140,12 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     const max = rail.scrollHeight - rail.clientHeight;
     const progress = max > 0 ? Math.min(1, Math.max(0, rail.scrollTop / max)) : 0;
     const nearestIndex = Math.round(progress * (projects.length - 1));
+    // During a click/keyboard glide, swallow the intermediate steps and only
+    // release once the scroll has settled on the target (activeIndexRef).
+    if (railGlideRef.current) {
+      if (nearestIndex === activeIndexRef.current) railGlideRef.current = false;
+      return;
+    }
     if (nearestIndex !== activeIndexRef.current) setActiveIndex(nearestIndex);
   };
 
@@ -153,6 +166,15 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     const rail = railRef.current;
     if (rail && projects.length > 1) {
       const max = rail.scrollHeight - rail.clientHeight;
+      // Lock out intermediate scroll updates for the duration of the glide so
+      // the stage jumps straight to `next` instead of flipping through every
+      // board on the way. The timer is a fallback in case the scroll settles a
+      // hair off the exact target and never trips the equality check.
+      railGlideRef.current = true;
+      if (railGlideTimer.current != null) clearTimeout(railGlideTimer.current);
+      railGlideTimer.current = window.setTimeout(() => {
+        railGlideRef.current = false;
+      }, 700);
       rail.scrollTo({ top: (next / (projects.length - 1)) * max, behavior: "smooth" });
     }
     if (focus) projectButtonRefs.current[next]?.focus();
