@@ -378,12 +378,12 @@ export function BrickCanvas({
     // so it keeps the pixel character but the gradient grades within each stud and
     // dissolves the blocky row-steps continuously into the border (built below,
     // after the studs are drawn).
-    const TOP_EDGE_FADE = 18; // studs the top fade spans
-    const BOTTOM_EDGE_FADE = 13; // bottom starts earlier and fades across more studs
+    const TOP_EDGE_FADE = 28; // studs the top fade spans
+    const BOTTOM_EDGE_FADE = 22; // bottom starts earlier and fades across more studs
     const TOP_EDGE_MAX_ALPHA = 1;
     const BOTTOM_EDGE_MAX_ALPHA = 1;
-    const TOP_EDGE_CURVE = 1.3; // lower spreads the darkening deeper so the image dissolves smoothly into the frame instead of clashing right at the edge
-    const BOTTOM_EDGE_CURVE = 2; // concentrate darkening near the very bottom so studs keep their texture over already-dark content (no dead flat-black slab)
+    const TOP_EDGE_CURVE = 0.8; // lower spreads the darkening deeper so the image dissolves smoothly into the frame instead of clashing right at the edge
+    const BOTTOM_EDGE_CURVE = 1.2; // concentrate darkening near the very bottom so studs keep their texture over already-dark content (no dead flat-black slab)
     const BOTTOM_SOLID_ROWS = 1;
     const BOTTOM_NEAR_SOLID_ROWS = 1;
     const BOTTOM_NEAR_SOLID_ALPHA = 0.85;
