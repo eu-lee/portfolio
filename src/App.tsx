@@ -196,7 +196,6 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   const [expActive, setExpActive] = useState(experience[0].key);
   const expActiveRef = useRef(experience[0].key);
   expActiveRef.current = expActive;
-  const [expIndicator, setExpIndicator] = useState<{ y: number; h: number } | null>(null);
   const expScrollRef = useRef<HTMLDivElement | null>(null);
   const expRafRef = useRef<number | null>(null);
   const expSectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -237,13 +236,6 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     if (!el || !section) return;
     el.scrollTo({ top: section.offsetTop, behavior: "smooth" });
   };
-
-  // Slide the CONTENTS indicator to the active category's button.
-  useLayoutEffect(() => {
-    const button = expTocRefs.current[expActive];
-    if (!button) return;
-    setExpIndicator({ y: button.offsetTop, h: button.offsetHeight });
-  }, [expActive, isExperience, navWireX]);
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
   // so the frame and the studs share boundaries. Falls back to the CSS defaults
@@ -451,7 +443,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       <div className={`page-fg page-experience${isExperience ? " is-active" : ""}`} aria-hidden={!isExperience}>
         <div className="exp-scroll" style={fieldStyle} ref={expScrollRef} onScroll={onExpScroll}>
           <div className="exp-scroll-inner">
-            {experience.map((cat, i) => (
+            {experience.map((cat) => (
               <section
                 className="exp-section"
                 data-cat={cat.key}
@@ -461,14 +453,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
                 }}
               >
                 <div className="exp-section-head">
-                  <span className="exp-count">
-                    {String(i + 1).padStart(2, "0")} / {cat.entries.length}{" "}
-                    {cat.entries.length === 1 ? "ENTRY" : "ENTRIES"}
-                  </span>
-                  <div className="exp-title-row">
-                    <span className="exp-dot" style={{ background: cat.color }} />
-                    <h2 className="exp-title">{cat.label}</h2>
-                  </div>
+                  <h2 className="exp-title">{cat.label}</h2>
                 </div>
                 <div className="exp-entries">
                   {cat.entries.map((entry) => (
@@ -487,15 +472,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         </div>
 
         <nav className="exp-toc" style={railStyle} aria-label="Experience contents">
-          <span className="exp-toc-label">CONTENTS</span>
           <div className="exp-toc-list">
-            {expIndicator && (
-              <span
-                className="exp-toc-indicator"
-                aria-hidden="true"
-                style={{ transform: `translateY(${expIndicator.y}px)`, height: `${expIndicator.h}px` }}
-              />
-            )}
             {experience.map((cat) => (
               <button
                 key={cat.key}
@@ -507,13 +484,10 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
                   expTocRefs.current[cat.key] = node;
                 }}
               >
-                <span className="exp-toc-dot" style={{ background: cat.color }} />
                 <span className="exp-toc-name">{cat.label}</span>
-                <span className="exp-toc-count">{String(cat.entries.length).padStart(2, "0")}</span>
               </button>
             ))}
           </div>
-          <span className="exp-toc-footer">EUGENE&nbsp;LEE&nbsp;·&nbsp;WATERLOO</span>
         </nav>
       </div>
     </section>
