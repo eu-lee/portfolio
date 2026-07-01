@@ -6,10 +6,22 @@ to change to add, edit, or reorder entries.
 
 ```
 content/
+  about/         markdown and inline icons for the /about page
   projects/      one <id>.md per project (+ optional colocated cover images)
-  experience/    one <key>.md per category
   backgrounds/   hero/background media
 ```
+
+## About — `content/about/index.md`
+
+The about page renders a small Markdown subset:
+
+- `# Heading`
+- paragraphs separated by blank lines
+- links like `[projects](/projects)` or `[GitHub](https://github.com/eu-lee)`
+- inline icons like `![Waterloo](icons/waterloo.svg)`
+
+Local about icons live in `content/about/icons/`, so they are referenced from
+Markdown with relative paths such as `icons/eureka.svg`.
 
 ## Projects — `content/projects/<id>.md`
 
@@ -38,23 +50,6 @@ Second description paragraph.
 **Covers:** drop the image next to the `.md` (e.g. `graph-pathfinder.png`) and
 set `cover: graph-pathfinder.png`. It's bundled and content-hashed by Vite, so a
 typo fails the build instead of 404-ing. A full `https://…` URL also works.
-
-## Experience — `content/experience/<key>.md`
-
-Frontmatter only (these are short labels, not prose). The filename is the
-category key.
-
-```markdown
----
-order: 3
-label: Hackathons
-entries:
-  - title: Motion
-    sub: Modular notes app
-    meta: 🥇 1ST · YVRHACKS
-    win: true
----
-```
 
 ## Backgrounds — `content/backgrounds/`
 

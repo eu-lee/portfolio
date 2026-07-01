@@ -1,17 +1,89 @@
-import type { CSSProperties, KeyboardEvent, MouseEvent, UIEvent } from "react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, UIEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
-import { experience } from "./data/experience";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { BrickGrid, BrickThumb } from "./components/BrickGrid";
 import { useStudGrid } from "./lib/heroGrid";
 import heroBackground from "../content/backgrounds/bkg4.gif";
+import aboutMarkdown from "../content/about/index.md?raw";
 
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
 
 function navigateTo(path: string) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+type AboutBlock = {
+  type: "heading" | "paragraph";
+  text: string;
+};
+
+const aboutBlocks: AboutBlock[] = aboutMarkdown
+  .trim()
+  .split(/\n\s*\n/)
+  .map((block) => {
+    const text = block.replace(/\s+/g, " ").trim();
+    return text.startsWith("# ")
+      ? { type: "heading", text: text.replace(/^#\s+/, "") }
+      : { type: "paragraph", text };
+  });
+
+const aboutAssets = import.meta.glob("../content/about/**/*.{svg,png,jpg,jpeg,gif,webp,avif}", {
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+function resolveAboutAsset(href: string): string {
+  if (/^(https?:)?\/\//.test(href) || href.startsWith("/")) return href;
+  const match = Object.entries(aboutAssets).find(([path]) => path.endsWith(`/content/about/${href}`));
+  if (!match) {
+    throw new Error(`About asset "${href}" not found in content/about/`);
+  }
+  return match[1];
+}
+
+function renderMarkdownInline(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const tokenPattern = /(!?)\[([^\]]+)]\(([^)]+)\)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = tokenPattern.exec(text))) {
+    const [raw, imageMarker, label, href] = match;
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+
+    if (imageMarker) {
+      nodes.push(
+        <img className="about-inline-icon" key={`${href}-${match.index}`} src={resolveAboutAsset(href)} alt={label} />
+      );
+    } else {
+      const isInternal = href.startsWith("/");
+      nodes.push(
+        <a
+          key={`${href}-${match.index}`}
+          href={href}
+          target={isInternal ? undefined : "_blank"}
+          rel={isInternal ? undefined : "noreferrer"}
+          onClick={
+            isInternal
+              ? (event) => {
+                  event.preventDefault();
+                  navigateTo(href);
+                }
+              : undefined
+          }
+        >
+          {label}
+        </a>
+      );
+    }
+
+    lastIndex = match.index + raw.length;
+  }
+
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  return nodes;
 }
 
 const ICONS = {
@@ -33,7 +105,7 @@ const ICONS = {
   )
 };
 
-type Route = "home" | "experience" | "projects";
+type Route = "home" | "about" | "projects";
 
 type PortfolioProps = {
   route: Route;
@@ -49,7 +121,7 @@ type PortfolioProps = {
 function Portfolio({ route, onOpenProject }: PortfolioProps) {
   const isHome = route === "home";
   const isProjects = route === "projects";
-  const isExperience = route === "experience";
+  const isAbout = route === "about";
   const heroRef = useRef<HTMLElement | null>(null);
   const linksRef = useRef<HTMLElement | null>(null);
   const grid = useStudGrid(heroRef);
@@ -69,8 +141,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
 
   // Fence off a wide right cell with the vertical divider and spread the three
   // links across it. The row spans the whole cell (divider -> right wire) and
-  // `space-evenly` (see CSS) distributes all four gaps equally: divider -> home,
-  // home -> experience, experience -> projects, projects -> right wire are the same.
+  // `space-evenly` (see CSS) distributes all four gaps equally across the nav cell.
   const [navWireX, setNavWireX] = useState<number | null>(null);
   const [navWidth, setNavWidth] = useState<number | null>(null);
   useLayoutEffect(() => {
@@ -89,7 +160,11 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       // the divider that far left of the right wire, snapped to a stud seam, then
       // size the row to span the whole cell so the even spacing lands exactly.
       const gap = Math.max(22, Math.min(56, grid.frame.rightPx * 0.03));
-      const desiredLeft = grid.frame.rightPx - (textWidth + 4 * gap);
+      const hero = heroRef.current;
+      const navPad = hero
+        ? parseFloat(getComputedStyle(hero).getPropertyValue("--nav-pad")) || 0
+        : 0;
+      const desiredLeft = grid.frame.rightPx - (textWidth + 4 * gap + 2 * navPad);
       const seamIndex = Math.floor((desiredLeft - grid.frame.leftPx) / grid.size);
       const wireX = grid.frame.leftPx + seamIndex * grid.size;
       setNavWireX(Math.round(wireX));
@@ -104,8 +179,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   }, [grid]);
 
   // The projects route is a stage + index rail: one active project shown large on
-  // the left, all projects listed on the right in FIXED positions (like the
-  // experience CONTENTS rail — the entries never move). The rail is a native
+  // the left, all projects listed on the right in FIXED positions. The rail is a native
   // scroller whose scrollable length comes from an invisible spacer, so it keeps
   // the momentum smoothness; the pinned list stays put and scroll PROGRESS maps to
   // which entry lights up + expands (and swaps the left stage). Defaults to 01.
@@ -189,54 +263,6 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     selectProject(activeIndexRef.current + dir, true);
   };
 
-  // ── /experience scroll-spy ───────────────────────────────────────────────────
-  // The left panel scrolls through the stacked categories; the right CONTENTS rail
-  // highlights whichever category owns the upper third of the viewport and slides
-  // its indicator bar to match.
-  const [expActive, setExpActive] = useState(experience[0].key);
-  const expActiveRef = useRef(experience[0].key);
-  expActiveRef.current = expActive;
-  const expScrollRef = useRef<HTMLDivElement | null>(null);
-  const expRafRef = useRef<number | null>(null);
-  const expSectionRefs = useRef<Record<string, HTMLElement | null>>({});
-  const expTocRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-
-  useEffect(() => {
-    return () => {
-      if (expRafRef.current != null) cancelAnimationFrame(expRafRef.current);
-    };
-  }, []);
-
-  const updateExpActive = () => {
-    const el = expScrollRef.current;
-    if (!el) return;
-    const threshold = el.scrollTop + el.clientHeight * 0.3;
-    let active = experience[0].key;
-    for (const cat of experience) {
-      const section = expSectionRefs.current[cat.key];
-      if (section && section.offsetTop <= threshold) active = cat.key;
-    }
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) {
-      active = experience[experience.length - 1].key;
-    }
-    if (active !== expActiveRef.current) setExpActive(active);
-  };
-
-  const onExpScroll = (_event: UIEvent<HTMLElement>) => {
-    if (expRafRef.current != null) return;
-    expRafRef.current = requestAnimationFrame(() => {
-      expRafRef.current = null;
-      updateExpActive();
-    });
-  };
-
-  const scrollToCat = (key: string) => {
-    const el = expScrollRef.current;
-    const section = expSectionRefs.current[key];
-    if (!el || !section) return;
-    el.scrollTo({ top: section.offsetTop, behavior: "smooth" });
-  };
-
   // Position the wire box + the text on the exact stud lines the grid resolved,
   // so the frame and the studs share boundaries. Falls back to the CSS defaults
   // for the first paint before the grid is measured.
@@ -259,8 +285,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     f && navWireX != null
       ? { left: `${f.leftPx}px`, width: `${navWireX - f.leftPx}px` }
       : undefined;
-  // railStyle spans the divider -> right wire cell; shared by the projects rail and
-  // the experience CONTENTS rail (both occupy that same cell).
+  // railStyle spans the divider -> right wire cell; shared by projects and about.
   const railStyle: CSSProperties | undefined =
     f && navWireX != null
       ? { left: `${navWireX}px`, width: `${f.rightPx - navWireX}px` }
@@ -273,7 +298,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       style={frameVars}
     >
       {/* BACKGROUND layer (under the frame): the mosaic. Home only — on projects
-          and experience it fades out, leaving the black field the wire box carves up. */}
+          and about it fades out, leaving the black field the wire box carves up. */}
       <div className={`page-bg${isHome ? " is-active" : ""}`} aria-hidden={!isHome}>
         <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} active={isHome} />
       </div>
@@ -309,7 +334,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         <nav
           className="hero-links"
           ref={linksRef}
-          style={navWidth != null ? { width: `${navWidth}px` } : undefined}
+          style={navWidth != null ? { width: `calc(${navWidth}px - (2 * var(--nav-pad)))` } : undefined}
         >
           <a
             href="/"
@@ -322,14 +347,14 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
             home
           </a>
           <a
-            href="/experience"
-            className={isExperience ? "is-active" : undefined}
+            href="/about"
+            className={isAbout ? "is-active" : undefined}
             onClick={(event) => {
               event.preventDefault();
-              navigateTo("/experience");
+              navigateTo("/about");
             }}
           >
-            experience
+            about
           </a>
           <a
             href="/projects"
@@ -344,27 +369,28 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         </nav>
       </header>
 
-      {/* FOREGROUND home layer (above the frame): name, tagline, socials,
-          location. Cross-fades with the projects layer below. */}
+      {/* PERSISTENT contact row: anchored in the right column at the bottom of the
+          shared frame, so it stays available on every route. */}
+      <div className="hero-socials" style={railStyle}>
+        <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
+          {ICONS.github}
+        </a>
+        <a href="https://www.linkedin.com/in/eu-lee/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+          {ICONS.linkedin}
+        </a>
+        <a href="mailto:eugene.lee@uwaterloo.ca" aria-label="Email">
+          {ICONS.mail}
+        </a>
+      </div>
+
+      {/* FOREGROUND home layer (above the frame): name and tagline. Cross-fades
+          with the projects layer below. */}
       <div className={`page-fg page-home${isHome ? " is-active" : ""}`} aria-hidden={!isHome}>
-        <div className="hero-content">
+        <div className="hero-content" style={fieldStyle}>
           <h1 className="hero-name">Eugene Lee</h1>
           <p className="hero-tagline">
-            I study Software Engineering at the University of Waterloo. I'm interested in hard problems and algorithms. My current work at Eureka DevSecOps revolves around building agents for automated code vulnerability remediation.
+            I study Software Engineering at the University of Waterloo
           </p>
-          <div className="hero-socials">
-
-            Feel free to connect with me through:
-            <a href="https://github.com/eu-lee" target="_blank" rel="noreferrer" aria-label="GitHub">
-              {ICONS.github}
-            </a>
-            <a href="https://www.linkedin.com/in/eu-lee/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
-              {ICONS.linkedin}
-            </a>
-            <a href="mailto:eugene.lee@uwaterloo.ca" aria-label="Email">
-              {ICONS.mail}
-            </a>
-          </div>
         </div>
       </div>
 
@@ -437,58 +463,24 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         </nav>
       </div>
 
-      {/* FOREGROUND experience layer (above the frame): the LEFT scroll panel of
-          categorized entries and the RIGHT CONTENTS rail that scroll-spies through
-          them, its indicator sliding to the active category. */}
-      <div className={`page-fg page-experience${isExperience ? " is-active" : ""}`} aria-hidden={!isExperience}>
-        <div className="exp-scroll" style={fieldStyle} ref={expScrollRef} onScroll={onExpScroll}>
-          <div className="exp-scroll-inner">
-            {experience.map((cat) => (
-              <section
-                className="exp-section"
-                data-cat={cat.key}
-                key={cat.key}
-                ref={(node) => {
-                  expSectionRefs.current[cat.key] = node;
-                }}
-              >
-                <div className="exp-section-head">
-                  <h2 className="exp-title">{cat.label}</h2>
-                </div>
-                <div className="exp-entries">
-                  {cat.entries.map((entry) => (
-                    <div className="exp-entry" key={`${cat.key}-${entry.title}`}>
-                      <div className="exp-entry-copy">
-                        <div className="exp-entry-title">{entry.title}</div>
-                        <div className="exp-entry-sub">{entry.sub}</div>
-                      </div>
-                      <div className={`exp-entry-meta${entry.win ? " is-win" : ""}`}>{entry.meta}</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+      {/* FOREGROUND about layer (above the frame): a compact about page that uses
+          the same left field + right rail geometry as projects. */}
+      <div className={`page-fg page-about${isAbout ? " is-active" : ""}`} aria-hidden={!isAbout}>
+        <section className="about-panel" style={fieldStyle} aria-label="About Eugene Lee">
+          <div className="about-markdown">
+            {aboutBlocks.map((block, index) =>
+              block.type === "heading" ? (
+                <h1 className="about-md-heading" key={`${block.type}-${index}`}>
+                  {renderMarkdownInline(block.text)}
+                </h1>
+              ) : (
+                <p className="about-md-paragraph" key={`${block.type}-${index}`}>
+                  {renderMarkdownInline(block.text)}
+                </p>
+              )
+            )}
           </div>
-        </div>
-
-        <nav className="exp-toc" style={railStyle} aria-label="Experience contents">
-          <div className="exp-toc-list">
-            {experience.map((cat) => (
-              <button
-                key={cat.key}
-                type="button"
-                className={`exp-toc-item${cat.key === expActive ? " is-active" : ""}`}
-                aria-current={cat.key === expActive}
-                onClick={() => scrollToCat(cat.key)}
-                ref={(node) => {
-                  expTocRefs.current[cat.key] = node;
-                }}
-              >
-                <span className="exp-toc-name">{cat.label}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
+        </section>
       </div>
     </section>
   );
@@ -566,7 +558,7 @@ export default function App() {
   }, []);
 
   const route: Route =
-    path === "/projects" ? "projects" : path === "/experience" ? "experience" : "home";
+    path === "/projects" ? "projects" : path === "/about" ? "about" : "home";
   const shellClass =
     route === "home" ? "app-shell home-shell" : `app-shell ${route}-shell`;
 
