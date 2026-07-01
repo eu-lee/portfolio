@@ -838,6 +838,7 @@ h3 {
   --rail-item-h: 82px;
   --rail-gap: 18px;
   --rail-pad: 0px;
+  --rail-inline-pad: clamp(32px, 4vw, 72px);
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
   bottom: var(--wire-bottom-inset);
@@ -861,7 +862,7 @@ h3 {
   flex-direction: column;
   gap: var(--rail-gap);
   min-height: 100%;
-  padding: var(--rail-pad) var(--nav-pad);
+  padding: var(--rail-pad) var(--rail-inline-pad);
 }
 
 .rail-item {
