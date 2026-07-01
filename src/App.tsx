@@ -389,7 +389,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         <div className="hero-content" style={fieldStyle}>
           <h1 className="hero-name">Eugene Lee</h1>
           <p className="hero-tagline">
-            I study Software Engineering at the University of Waterloo
+            Software Engineering @ the University of Waterloo
           </p>
         </div>
       </div>

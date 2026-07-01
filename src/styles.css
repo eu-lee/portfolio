@@ -1031,14 +1031,17 @@ h3 {
   left: var(--wire-left); /* inline override snaps to the divider */
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: var(--frame-pad);
 }
 
 .about-markdown {
   display: grid;
+  justify-items: start;
   gap: clamp(14px, 2.5vh, 26px);
-  width: 100%;
+  width: fit-content;
   max-width: 820px;
+  text-align: left;
 }
 
 .about-md-heading,
@@ -1067,21 +1070,16 @@ h3 {
   letter-spacing: 0;
 }
 
-.about-md-paragraph + .about-md-paragraph:nth-last-child(-n + 2) {
-  margin-top: clamp(10px, 2vh, 20px);
-}
-
 .about-md-heading a,
 .about-md-paragraph a {
-  border-bottom: 2px solid rgba(250, 200, 10, 0.72);
+  border-bottom: none;
   color: rgba(255, 255, 255, 0.92);
   text-decoration: none;
-  transition: border-color 0.18s ease, color 0.18s ease;
+  transition: color 0.18s ease;
 }
 
 .about-md-heading a:hover,
 .about-md-paragraph a:hover {
-  border-bottom-color: var(--yellow);
   color: #fff;
 }
 

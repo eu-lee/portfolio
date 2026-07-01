@@ -1,11 +1,11 @@
 Hi, I'm Eugene.
 
-I'm a second-year Software Engineering student at the  [University of Waterloo](https://uwaterloo.ca). I'm interested in algorithms.
+As a kid, I loved to play with Lego. It's what introduced me to programming. 
 
-I currently work at [Eureka DevSecOps](https://www.eurekadevsecops.com), where I'm building agents that leverage security scanners to detect and automatically remediate code vulnerabilities.
+Now, I'm in my second year at the [University of Waterloo](https://uwaterloo.ca), where I study Software Engineering. I'm interested in algorithms.
 
-I also enjoy hackathons — I placed 1st at Hack the Valley. You can check out this and other projects on my [Devpost](https://devpost.com/eu-lee).
+This summer, I'm working at [Eureka DevSecOps](https://www.eurekadevsecops.com), where I build agents that leverage security scanners to detect and automatically remediate code vulnerabilities.
 
-My hobbies include badminton, snowboarding, and watching basketball.
+I also like attending hackathons; you can view some of my projects on my [Devpost](https://devpost.com/eu-lee).
 
-To see what I've been working on, check out my 
+Feel free to reach out.
