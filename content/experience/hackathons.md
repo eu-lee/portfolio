@@ -1,7 +1,6 @@
 ---
 order: 3
 label: Hackathons
-color: "#FAC80A"
 entries:
   - title: Motion
     sub: Modular notes app

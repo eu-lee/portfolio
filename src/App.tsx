@@ -5,7 +5,7 @@ import { experience } from "./data/experience";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { BrickGrid, BrickThumb } from "./components/BrickGrid";
 import { useStudGrid } from "./lib/heroGrid";
-import heroBackground from "./assets/backgrounds/bkg4.gif";
+import heroBackground from "../content/backgrounds/bkg4.gif";
 
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
 
