@@ -183,7 +183,7 @@ button {
   --intro-text-delay: 1.1s; /* text, once the mosaic is up */
   --intro-wire-fade: 0.5s; /* extensions dissolve away */
   --intro-wire-fade-delay: 1.1s; /* once the square has settled */
-  --page-fade: 0.14s; /* home <-> projects route cross-fade */
+  --page-fade: 0.32s; /* cross-fade between any two routes (home / experience / projects) */
 }
 
 @keyframes wire-draw-y {
@@ -282,7 +282,7 @@ button {
 
 /* ─── Route cross-fade ────────────────────────────────────────────────────────
    The frame, vignette and nav are persistent; only the route's content lives in
-   these layers, so navigating between home and projects cross-fades the content
+   these layers, so navigating between any two routes cross-fades the content
    while the wires stay put. Two layers per route so they straddle the frame: the
    background layer (mosaic) sits under the wires (z-index 1), the foreground
    layer (text / catalogue) above them (z-index 3). Both fill the hero box so the
@@ -297,7 +297,7 @@ button {
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--page-fade, 0.14s) ease;
+  transition: opacity var(--page-fade, 0.32s) ease-in-out;
   /* Promote each route layer to its own GPU compositor layer so the cross-fade is
      a pure compositor opacity animation. Without this the layer repaints on the
      main thread, and the hero's continuous canvas redraw stalls the fade (it gets
@@ -376,6 +376,7 @@ button {
 }
 
 .hero-links a {
+  padding-inline: .28em;
   color: rgba(255, 255, 255, .6);
   transition: color .18s ease;
 }
@@ -524,7 +525,8 @@ h3 {
   height: 100svh;
 }
 
-.app-shell.projects-shell {
+.app-shell.projects-shell,
+.app-shell.experience-shell {
   height: 100svh;
   overflow: hidden;
 }
@@ -761,7 +763,8 @@ h3 {
    positions hang off the same --wire-* / --nav-band / --nav-pad vars the hero sets.
    ───────────────────────────────────────────────────────────────────────────── */
 
-.hero.is-projects {
+.hero.is-projects,
+.hero.is-experience {
   height: 100svh;
 }
 
@@ -835,44 +838,60 @@ h3 {
 /* RIGHT index rail beyond the vertical divider: a compact project navigation.
    The left side is the viewer, so the rail stays descriptive but scannable. */
 .projects-rail {
-  --rail-item-h: 82px;
-  --rail-gap: 18px;
-  --rail-pad: 0px;
+  /* Row height fixed at the EXPANDED size so the active row grows its text IN PLACE
+     without reflowing the list. */
+  --rail-item-h: 84px;
+  --rail-gap: 8px;
   --rail-inline-pad: clamp(32px, 4vw, 72px);
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
   bottom: var(--wire-bottom-inset);
   left: var(--wire-right); /* inline override snaps to the divider */
   z-index: 3;
+  /* Native momentum scroller (like the experience panel) — but the scroll length
+     comes from the spacer below; the list itself is pinned and only the highlight
+     travels. Scrollbar hidden. */
   overflow-x: hidden;
   overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-padding-block: var(--rail-pad);
   overscroll-behavior: contain;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
 }
 .projects-rail::-webkit-scrollbar {
   display: none;
 }
 
+/* Pinned entry list: sticks in place (full cell height, entries centered) while the
+   spacer scrolls beneath it, so the projects never move — only the active one
+   lights up + expands, exactly like the experience CONTENTS rail. */
 .projects-rail-track {
+  position: sticky;
+  top: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--rail-gap);
-  min-height: 100%;
-  padding: var(--rail-pad) var(--rail-inline-pad);
+  padding: 0 var(--rail-inline-pad);
+}
+
+/* Invisible scroll length — its height sets how far you scroll to move through the
+   entries (set inline from the entry count). */
+.projects-rail-spacer {
+  flex: none;
 }
 
 .rail-item {
+  /* Text size knobs. The active row bumps these and the children ease toward them,
+     so the entry's text expands (like the experience CONTENTS rail) instead of only
+     changing color. The thumbnail stays a fixed size so nothing shifts sideways. */
+  --thumb-size: 64px;
+  --name-size: 15px;
+  --summary-size: 11px;
   flex: none;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: var(--rail-item-h);
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
   text-align: left;
   font: inherit;
   color: inherit;
@@ -880,13 +899,16 @@ h3 {
   border: 0;
   background: transparent;
   cursor: pointer;
-  opacity: 0.58;
-  transition: opacity 0.12s ease, transform 0.18s ease;
+  opacity: 0.4;
+  transition: opacity 0.24s ease;
 }
-.rail-item:hover,
+.rail-item:hover {
+  opacity: 0.75;
+}
 .rail-item.is-active {
+  --name-size: 23px;
+  --summary-size: 13px;
   opacity: 1;
-  transform: translateX(3px);
 }
 .rail-item:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.5);
@@ -903,7 +925,7 @@ h3 {
 .rail-thumb {
   position: relative;
   flex: none;
-  width: 62px;
+  width: var(--thumb-size);
   aspect-ratio: 1;
   overflow: hidden;
   border: 1px solid #8b9296;
@@ -929,10 +951,11 @@ h3 {
 .rail-name {
   font-family: "Archivo", system-ui, sans-serif;
   font-weight: 800;
-  font-size: 15px;
+  font-size: var(--name-size);
   letter-spacing: -0.005em;
   color: rgba(255, 255, 255, 0.55);
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.24s ease;
 }
 
 .rail-summary {
@@ -942,10 +965,11 @@ h3 {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: var(--summary-size);
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.46);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.24s ease;
 }
 
 /* Active row: white name and clearer description. */
@@ -975,4 +999,229 @@ h3 {
    shared brick wall keeps covering it (same as the hero). */
 @media (max-width: 760px) {
   .stage-title { font-size: clamp(28px, 8vw, 44px); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   /experience — reuses the hero wireframe 1:1 like /projects. The LEFT cell holds
+   a scrolling panel of categorized entries; the RIGHT cell (beyond the nav
+   divider) is a CONTENTS scroll-spy whose indicator bar slides to the active
+   category. Positions hang off the same --wire-* / --nav-band vars.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* LEFT scroll panel. Bounded by the left wire and the nav divider (left/width set
+   inline). Fades top+bottom so entries dissolve into the frame as they scroll. */
+.exp-scroll {
+  position: absolute;
+  top: calc(var(--wire-top) + var(--nav-band));
+  bottom: var(--wire-bottom-inset);
+  left: var(--wire-left); /* inline override snaps to the divider */
+  z-index: 3;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* Fade top AND bottom so entries dissolve into the frame as they scroll past
+     each edge, instead of hard-cutting at the nav divider / bottom wire. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent);
+}
+.exp-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.exp-scroll-inner {
+  /* Top padding clears the fade band so the first category reads crisp on load. */
+  padding: clamp(40px, 8vh, 84px) clamp(24px, 4vw, 64px) clamp(60px, 14vh, 140px);
+}
+
+.exp-section {
+  padding-top: clamp(24px, 5vh, 54px);
+}
+.exp-section:first-child {
+  padding-top: 0;
+}
+
+.exp-section-head {
+  padding: clamp(12px, 2.4vh, 22px) 0 14px;
+}
+.exp-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: #8b9296;
+}
+.exp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.exp-dot {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+.exp-title {
+  margin: 0;
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(30px, 3.4vw, 50px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.exp-entries {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.6vh, 26px);
+  margin-top: clamp(6px, 1.4vh, 14px);
+}
+.exp-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.exp-entry-copy {
+  min-width: 0;
+}
+.exp-entry-title {
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(18px, 1.9vw, 23px);
+  color: #fff;
+}
+.exp-entry-sub {
+  margin-top: 5px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.exp-entry-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: #8b9296;
+}
+.exp-entry-meta.is-win {
+  color: var(--yellow);
+}
+
+/* RIGHT CONTENTS rail: static list (all categories fit) with a sliding indicator
+   bar on the inner edge. Vertically centered between the divider cell's top/bottom
+   like the design. */
+.exp-toc {
+  position: absolute;
+  top: calc(var(--wire-top) + var(--nav-band));
+  bottom: var(--wire-bottom-inset);
+  left: var(--wire-right); /* inline override snaps to the divider */
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(24px, 4vh, 48px) clamp(24px, 2vw, 34px);
+}
+.exp-toc-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #8b9296;
+}
+.exp-toc-footer {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #8b9296;
+}
+
+.exp-toc-list {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(16px, 2.8vh, 28px);
+}
+
+/* The sliding bar. `top`/height come inline from the active button; transform is
+   the animated part so it glides between categories. Pinned to the right edge. */
+.exp-toc-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.exp-toc-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  padding: 0 16px 0 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(17px, 1.9vw, 22px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.34);
+  transition: color 0.18s ease, font-size 0.18s ease, font-weight 0.18s ease;
+}
+.exp-toc-item.is-active {
+  font-weight: 800;
+  font-size: clamp(20px, 2.2vw, 28px);
+  color: #fff;
+}
+.exp-toc-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  opacity: 0.5;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: opacity 0.18s ease;
+}
+.exp-toc-item.is-active .exp-toc-dot {
+  opacity: 1;
+}
+.exp-toc-name {
+  flex: 1;
+}
+.exp-toc-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: rgba(139, 146, 150, 0.45);
+}
+.exp-toc-item.is-active .exp-toc-count {
+  color: #8b9296;
+}
+
+/* Join the intro choreography with the same timing as the hero text. */
+.hero.is-intro .exp-scroll,
+.hero.is-intro .exp-toc {
+  opacity: 0;
+}
+.hero.is-intro-ready .exp-scroll,
+.hero.is-intro-ready .exp-toc {
+  animation: hero-fade-in var(--intro-fade) ease-out var(--intro-text-delay) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero.is-intro .exp-scroll,
+  .hero.is-intro .exp-toc {
+    opacity: 1;
+    animation: none;
+  }
 }

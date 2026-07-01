@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: #000; }
+  .exp-scroll::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</helmet>
+
+<section data-screen-label="Experience" style="position:relative;width:100%;height:100svh;overflow:hidden;background:#000;font-family:'Space Grotesk',system-ui,sans-serif;color:#f3f5fa;">
+
+  <!-- Wire box -->
+  <span style="position:absolute;top:32px;left:32px;right:32px;height:1px;background:#8b9296;"></span>
+  <span style="position:absolute;bottom:32px;left:32px;right:32px;height:1px;background:#8b9296;"></span>
+  <span style="position:absolute;top:32px;bottom:32px;left:32px;width:1px;background:#8b9296;"></span>
+  <span style="position:absolute;top:32px;bottom:32px;right:32px;width:1px;background:#8b9296;"></span>
+  <!-- nav underline -->
+  <span style="position:absolute;top:92px;left:32px;right:32px;height:1px;background:#8b9296;"></span>
+  <!-- navbar divider on the right (full height) -->
+  <span style="position:absolute;top:32px;bottom:32px;right:300px;width:1px;background:#8b9296;"></span>
+
+  <!-- Nav band (right cell) -->
+  <header style="position:absolute;top:32px;right:32px;left:calc(100% - 300px);height:60px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.13em;">
+    <nav style="display:flex;gap:24px;">
+      <a href="#" style="color:rgba(255,255,255,.6);text-decoration:none;">home</a>
+      <a href="#" style="color:#fff;text-decoration:none;">experience</a>
+      <a href="#" style="color:rgba(255,255,255,.6);text-decoration:none;">projects</a>
+    </nav>
+  </header>
+
+  <!-- MAIN scroll panel: every section stacked -->
+  <div class="exp-scroll" ref="{{ containerRef }}" onScroll="{{ onScroll }}" style="position:absolute;top:93px;bottom:33px;left:33px;right:300px;overflow-y:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,#000 92%,transparent);mask-image:linear-gradient(to bottom,#000 92%,transparent);">
+    <div style="padding:0 clamp(44px,6vw,96px) clamp(60px,14vh,140px);">
+      <sc-for list="{{ sections }}" as="s" hint-placeholder-count="4">
+        <div data-cat="{{ s.key }}" style="padding-top:clamp(30px,5vh,54px);">
+          <div style="position:sticky;top:0;background:#000;padding:clamp(14px,2.4vh,22px) 0 14px;z-index:2;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#8b9296;">{{ s.count }}</span>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+              <span style="{{ s.dotStyle }}"></span>
+              <h2 style="{{ s.titleStyle }}">{{ s.label }}</h2>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:clamp(16px,2.6vh,26px);margin-top:clamp(6px,1.4vh,14px);">
+            <sc-for list="{{ s.entries }}" as="e" hint-placeholder-count="2">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:24px;flex-wrap:wrap;">
+                <div style="min-width:0;">
+                  <div style="font-family:'Archivo',sans-serif;font-weight:700;font-size:clamp(18px,1.9vw,23px);color:#fff;">{{ e.title }}</div>
+                  <div style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.55);">{{ e.sub }}</div>
+                </div>
+                <div style="{{ e.metaStyle }}">{{ e.meta }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- RIGHT cell: table of contents (scroll-spy) -->
+  <div style="position:absolute;right:32px;left:calc(100% - 300px);top:93px;bottom:32px;display:flex;flex-direction:column;padding:clamp(28px,4vh,48px) 30px clamp(28px,4vh,44px);">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:#8b9296;">CONTENTS</span>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:clamp(16px,2.8vh,28px);">
+      <sc-for list="{{ toc }}" as="c" hint-placeholder-count="4">
+        <button type="button" onClick="{{ c.onClick }}" style="{{ c.style }}">
+          <span style="{{ c.dotStyle }}"></span>
+          <span style="flex:1;">{{ c.label }}</span>
+          <span style="{{ c.countStyle }}">{{ c.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#8b9296;">EUGENE&nbsp;LEE&nbsp;·&nbsp;WATERLOO</div>
+  </div>
+
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.containerRef = React.createRef();
+    this.state = { active: "work" };
+    this._raf = null;
+  }
+
+  getEl() {
+    return this.rootEl && this.rootEl.querySelector
+      ? this.rootEl.querySelector(".exp-scroll")
+      : document.querySelector(".exp-scroll");
+  }
+
+  componentDidMount() {
+    const attach = () => {
+      const el = this.getEl();
+      if (!el) { requestAnimationFrame(attach); return; }
+      this._el = el;
+      el.addEventListener("scroll", this.onScroll, { passive: true });
+      this.updateActive();
+    };
+    attach();
+  }
+
+  componentWillUnmount() {
+    if (this._el) this._el.removeEventListener("scroll", this.onScroll);
+    if (this._raf) cancelAnimationFrame(this._raf);
+  }
+
+  onScroll = () => {
+    if (this._raf) return;
+    this._raf = requestAnimationFrame(() => {
+      this._raf = null;
+      this.updateActive();
+    });
+  };
+
+  updateActive() {
+    const el = this._el || this.getEl();
+    if (!el) return;
+    const secs = Array.from(el.querySelectorAll("[data-cat]"));
+    if (!secs.length) return;
+    const threshold = el.scrollTop + el.clientHeight * 0.3;
+    let active = secs[0].dataset.cat;
+    for (const s of secs) {
+      if (s.offsetTop <= threshold) active = s.dataset.cat;
+    }
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) {
+      active = secs[secs.length - 1].dataset.cat;
+    }
+    if (active !== this.state.active) this.setState({ active });
+  }
+
+  scrollToCat(key) {
+    const el = this._el || this.getEl();
+    if (!el) return;
+    const t = el.querySelector('[data-cat="' + key + '"]');
+    if (!t) return;
+    el.scrollTop = Math.min(t.offsetTop - 4, el.scrollHeight - el.clientHeight);
+  }
+
+  renderVals() {
+    const CATS = [
+      { key: "work", label: "Work", color: "#68C3E2" },
+      { key: "teams", label: "Design Teams", color: "#E06A6A" },
+      { key: "hackathons", label: "Hackathons", color: "#FAC80A" },
+      { key: "hardware", label: "Hardware", color: "#8b9296" }
+    ];
+    const DATA = {
+      work: [
+        { title: "Eureka DevSecOps", sub: "Software Engineer — Security Agents", meta: "2025 — PRESENT" }
+      ],
+      teams: [
+        { title: "WATonomous · Autonomy", sub: "Perception & Autonomy Stack — ROS2, CUDA", meta: "2024 — PRESENT" },
+        { title: "WATonomous · Humanoid", sub: "Vision — dexterous manipulation", meta: "2025 — PRESENT" }
+      ],
+      hackathons: [
+        { title: "Motion", sub: "Modular notes app", meta: "🥇 1ST · YVRHACKS", win: true },
+        { title: "PlantHopper", sub: "Automated plant-watering turret", meta: "🥇 1ST · HACK THE VALLEY X", win: true },
+        { title: "Adify", sub: "Turns b-roll into polished ads", meta: "TRACK WIN · LISTENHACKS", win: true }
+      ],
+      hardware: [
+        { title: "Muon Watcher", sub: "Muon detector filmed at 30km altitude", meta: "BUILT" },
+        { title: "PlantHopper", sub: "Soil-tracking water-gun turret", meta: "BUILT" }
+      ]
+    };
+
+    const active = this.state.active;
+
+    const sections = CATS.map((c, i) => {
+      const n = DATA[c.key].length;
+      return {
+        key: c.key,
+        label: c.label,
+        count: String(i + 1).padStart(2, "0") + " / " + n + (n === 1 ? " ENTRY" : " ENTRIES"),
+        dotStyle: {
+          width: "11px",
+          height: "11px",
+          borderRadius: "50%",
+          flex: "none",
+          background: c.color,
+          boxShadow: "inset 0 -1px 2px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.4)"
+        },
+        titleStyle: {
+          margin: 0,
+          fontFamily: "'Archivo', sans-serif",
+          fontWeight: 900,
+          fontSize: "clamp(30px,3.4vw,50px)",
+          lineHeight: ".95",
+          letterSpacing: "-.02em",
+          color: "#fff"
+        },
+        entries: DATA[c.key].map((e) => ({
+          title: e.title,
+          sub: e.sub,
+          meta: e.meta,
+          metaStyle: {
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "10.5px",
+            letterSpacing: ".06em",
+            whiteSpace: "nowrap",
+            color: e.win ? "#FAC80A" : "#8b9296"
+          }
+        }))
+      };
+    });
+
+    const toc = CATS.map((c) => {
+      const on = c.key === active;
+      const n = DATA[c.key].length;
+      return {
+        label: c.label,
+        count: String(n).padStart(2, "0"),
+        onClick: () => this.scrollToCat(c.key),
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          width: "100%",
+          appearance: "none",
+          border: 0,
+          borderRight: on ? "2px solid #fff" : "2px solid transparent",
+          paddingRight: "16px",
+          background: "transparent",
+          cursor: "pointer",
+          textAlign: "left",
+          fontFamily: "'Archivo', sans-serif",
+          fontWeight: on ? 800 : 600,
+          fontSize: on ? "clamp(20px,2.2vw,28px)" : "clamp(17px,1.9vw,22px)",
+          lineHeight: 1.05,
+          letterSpacing: "-.01em",
+          color: on ? "#fff" : "rgba(255,255,255,.34)",
+          transition: "color .18s ease, font-size .18s ease, border-color .18s ease"
+        },
+        dotStyle: {
+          width: "9px",
+          height: "9px",
+          borderRadius: "50%",
+          flex: "none",
+          background: c.color,
+          opacity: on ? 1 : 0.5,
+          boxShadow: "inset 0 -1px 2px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.4)"
+        },
+        countStyle: {
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "10px",
+          letterSpacing: ".08em",
+          color: on ? "#8b9296" : "rgba(139,146,150,.45)"
+        }
+      };
+    });
+
+    return {
+      sections,
+      toc,
+      containerRef: this.containerRef,
+      onScroll: this.onScroll
+    };
+  }
+}
+</script>
+</body>
+</html>

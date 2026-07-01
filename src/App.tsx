@@ -1,6 +1,7 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, UIEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
+import { experience } from "./data/experience";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { BrickGrid, BrickThumb } from "./components/BrickGrid";
 import { useStudGrid } from "./lib/heroGrid";
@@ -32,8 +33,10 @@ const ICONS = {
   )
 };
 
+type Route = "home" | "experience" | "projects";
+
 type PortfolioProps = {
-  isProjects: boolean;
+  route: Route;
   onOpenProject: (project: Project) => void;
 };
 
@@ -43,7 +46,10 @@ type PortfolioProps = {
 // mosaic, which sits under the frame) and a foreground layer (text / catalogue,
 // above the frame), and the layers for the two routes cross-fade — so the frame
 // stays put while only what fills it swaps.
-function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
+function Portfolio({ route, onOpenProject }: PortfolioProps) {
+  const isHome = route === "home";
+  const isProjects = route === "projects";
+  const isExperience = route === "experience";
   const heroRef = useRef<HTMLElement | null>(null);
   const linksRef = useRef<HTMLElement | null>(null);
   const grid = useStudGrid(heroRef);
@@ -64,7 +70,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
   // Fence off a wide right cell with the vertical divider and spread the three
   // links across it. The row spans the whole cell (divider -> right wire) and
   // `space-evenly` (see CSS) distributes all four gaps equally: divider -> home,
-  // home -> work, work -> projects, projects -> right wire are the same.
+  // home -> experience, experience -> projects, projects -> right wire are the same.
   const [navWireX, setNavWireX] = useState<number | null>(null);
   const [navWidth, setNavWidth] = useState<number | null>(null);
   useLayoutEffect(() => {
@@ -98,68 +104,58 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
   }, [grid]);
 
   // The projects route is a stage + index rail: one active project shown large on
-  // the left, every project listed on the right. Defaults to 01 on load.
+  // the left, all projects listed on the right in FIXED positions (like the
+  // experience CONTENTS rail — the entries never move). The rail is a native
+  // scroller whose scrollable length comes from an invisible spacer, so it keeps
+  // the momentum smoothness; the pinned list stays put and scroll PROGRESS maps to
+  // which entry lights up + expands (and swaps the left stage). Defaults to 01.
   const [activeIndex, setActiveIndex] = useState(0);
-  const [railCenterPad, setRailCenterPad] = useState(0);
   const activeProject = projects[activeIndex];
+  const activeIndexRef = useRef(0);
   const railRef = useRef<HTMLElement | null>(null);
-  const railScrollResetRef = useRef<number | null>(null);
+  const railRafRef = useRef<number | null>(null);
   const projectButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  // Keep a ref mirror of the active index so the scroll/key handlers read the
+  // latest value without being re-created (and re-bound) every render.
+  activeIndexRef.current = activeIndex;
 
   useEffect(() => {
     return () => {
-      if (railScrollResetRef.current != null) {
-        window.clearTimeout(railScrollResetRef.current);
-      }
+      if (railRafRef.current != null) cancelAnimationFrame(railRafRef.current);
     };
   }, []);
 
-  useLayoutEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-
-    const measure = () => {
-      const item = rail.querySelector<HTMLButtonElement>(".rail-item");
-      const itemHeight = item?.offsetHeight ?? 82;
-      setRailCenterPad(Math.max(0, (rail.clientHeight - itemHeight) / 2));
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(rail);
-    return () => observer.disconnect();
-  }, [isProjects, navWireX]);
-
-  const scrollToProject = (index: number, focus = false) => {
-    const next = Math.min(projects.length - 1, Math.max(0, index));
-    setActiveIndex(next);
-    projectButtonRefs.current[next]?.scrollIntoView({ block: "center", behavior: "smooth" });
-
-    if (focus) {
-      projectButtonRefs.current[next]?.focus();
-    }
-  };
-
+  // Map scroll progress (0 → top, 1 → bottom of the spacer) to the entry index.
   const updateActiveFromRail = () => {
     const rail = railRef.current;
     if (!rail) return;
+    const max = rail.scrollHeight - rail.clientHeight;
+    const progress = max > 0 ? Math.min(1, Math.max(0, rail.scrollTop / max)) : 0;
+    const nearestIndex = Math.round(progress * (projects.length - 1));
+    if (nearestIndex !== activeIndexRef.current) setActiveIndex(nearestIndex);
+  };
 
-    const railBox = rail.getBoundingClientRect();
-    const railCenter = railBox.top + railBox.height / 2;
-    let nearestIndex = activeIndex;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-
-    projectButtonRefs.current.forEach((button, index) => {
-      if (!button) return;
-      const box = button.getBoundingClientRect();
-      const distance = Math.abs(box.top + box.height / 2 - railCenter);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
-      }
+  // rAF-throttled off the native scroll so the highlight glides with the momentum.
+  const onRailScroll = (_event: UIEvent<HTMLElement>) => {
+    if (railRafRef.current != null) return;
+    railRafRef.current = requestAnimationFrame(() => {
+      railRafRef.current = null;
+      updateActiveFromRail();
     });
+  };
 
-    setActiveIndex(nearestIndex);
+  // Click / keyboard: scroll to the progress position for that entry; the native
+  // smooth-scroll then drives updateActiveFromRail so the highlight tracks the glide.
+  const selectProject = (index: number, focus = false) => {
+    const next = Math.min(projects.length - 1, Math.max(0, index));
+    setActiveIndex(next);
+    const rail = railRef.current;
+    if (rail && projects.length > 1) {
+      const max = rail.scrollHeight - rail.clientHeight;
+      rail.scrollTo({ top: (next / (projects.length - 1)) * max, behavior: "smooth" });
+    }
+    if (focus) projectButtonRefs.current[next]?.focus();
   };
 
   // Up/Down move the active project and carry focus with them; tab + enter on the
@@ -168,18 +164,64 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault();
     const dir = event.key === "ArrowDown" ? 1 : -1;
-    scrollToProject(activeIndex + dir, true);
+    selectProject(activeIndexRef.current + dir, true);
   };
 
-  const onRailScroll = (_event: UIEvent<HTMLElement>) => {
-    if (railScrollResetRef.current != null) {
-      window.clearTimeout(railScrollResetRef.current);
+  // ── /experience scroll-spy ───────────────────────────────────────────────────
+  // The left panel scrolls through the stacked categories; the right CONTENTS rail
+  // highlights whichever category owns the upper third of the viewport and slides
+  // its indicator bar to match.
+  const [expActive, setExpActive] = useState(experience[0].key);
+  const expActiveRef = useRef(experience[0].key);
+  expActiveRef.current = expActive;
+  const [expIndicator, setExpIndicator] = useState<{ y: number; h: number } | null>(null);
+  const expScrollRef = useRef<HTMLDivElement | null>(null);
+  const expRafRef = useRef<number | null>(null);
+  const expSectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const expTocRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    return () => {
+      if (expRafRef.current != null) cancelAnimationFrame(expRafRef.current);
+    };
+  }, []);
+
+  const updateExpActive = () => {
+    const el = expScrollRef.current;
+    if (!el) return;
+    const threshold = el.scrollTop + el.clientHeight * 0.3;
+    let active = experience[0].key;
+    for (const cat of experience) {
+      const section = expSectionRefs.current[cat.key];
+      if (section && section.offsetTop <= threshold) active = cat.key;
     }
-    railScrollResetRef.current = window.setTimeout(() => {
-      railScrollResetRef.current = null;
-      updateActiveFromRail();
-    }, 90);
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) {
+      active = experience[experience.length - 1].key;
+    }
+    if (active !== expActiveRef.current) setExpActive(active);
   };
+
+  const onExpScroll = (_event: UIEvent<HTMLElement>) => {
+    if (expRafRef.current != null) return;
+    expRafRef.current = requestAnimationFrame(() => {
+      expRafRef.current = null;
+      updateExpActive();
+    });
+  };
+
+  const scrollToCat = (key: string) => {
+    const el = expScrollRef.current;
+    const section = expSectionRefs.current[key];
+    if (!el || !section) return;
+    el.scrollTo({ top: section.offsetTop, behavior: "smooth" });
+  };
+
+  // Slide the CONTENTS indicator to the active category's button.
+  useLayoutEffect(() => {
+    const button = expTocRefs.current[expActive];
+    if (!button) return;
+    setExpIndicator({ y: button.offsetTop, h: button.offsetHeight });
+  }, [expActive, isExperience, navWireX]);
 
   // Position the wire box + the text on the exact stud lines the grid resolved,
   // so the frame and the studs share boundaries. Falls back to the CSS defaults
@@ -203,25 +245,23 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
     f && navWireX != null
       ? { left: `${f.leftPx}px`, width: `${navWireX - f.leftPx}px` }
       : undefined;
+  // railStyle spans the divider -> right wire cell; shared by the projects rail and
+  // the experience CONTENTS rail (both occupy that same cell).
   const railStyle: CSSProperties | undefined =
     f && navWireX != null
       ? { left: `${navWireX}px`, width: `${f.rightPx - navWireX}px` }
       : undefined;
-  const railSnapStyle = {
-    ...(railStyle ?? {}),
-    "--rail-pad": `${railCenterPad}px`
-  } as CssVars;
 
   return (
     <section
-      className={`hero${isProjects ? " is-projects" : " is-home"} is-intro${introReady ? " is-intro-ready" : ""}`}
+      className={`hero is-${route} is-intro${introReady ? " is-intro-ready" : ""}`}
       ref={heroRef}
       style={frameVars}
     >
       {/* BACKGROUND layer (under the frame): the mosaic. Home only — on projects
-          it fades out, leaving the black field the wire box carves up. */}
-      <div className={`page-bg${isProjects ? "" : " is-active"}`} aria-hidden={isProjects}>
-        <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} active={!isProjects} />
+          and experience it fades out, leaving the black field the wire box carves up. */}
+      <div className={`page-bg${isHome ? " is-active" : ""}`} aria-hidden={!isHome}>
+        <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} active={isHome} />
       </div>
 
       {/* PERSISTENT wire box (drawn once, shared by both routes). Two layers: the
@@ -259,7 +299,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
         >
           <a
             href="/"
-            className={isProjects ? undefined : "is-active"}
+            className={isHome ? "is-active" : undefined}
             onClick={(event) => {
               event.preventDefault();
               navigateTo("/");
@@ -268,13 +308,14 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
             home
           </a>
           <a
-            href="/projects"
+            href="/experience"
+            className={isExperience ? "is-active" : undefined}
             onClick={(event) => {
               event.preventDefault();
-              navigateTo("/projects");
+              navigateTo("/experience");
             }}
           >
-            work
+            experience
           </a>
           <a
             href="/projects"
@@ -291,7 +332,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
 
       {/* FOREGROUND home layer (above the frame): name, tagline, socials,
           location. Cross-fades with the projects layer below. */}
-      <div className={`page-fg page-home${isProjects ? "" : " is-active"}`} aria-hidden={isProjects}>
+      <div className={`page-fg page-home${isHome ? " is-active" : ""}`} aria-hidden={!isHome}>
         <div className="hero-content">
           <h1 className="hero-name">Eugene Lee</h1>
           <p className="hero-tagline">
@@ -336,12 +377,14 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
 
         <nav
           className="projects-rail"
-          style={railSnapStyle}
+          style={railStyle}
           ref={railRef}
           onKeyDown={onRailKeyDown}
           onScroll={onRailScroll}
           aria-label="Project index"
         >
+          {/* Pinned list — the entries hold their positions while the spacer below
+              provides the scroll length that drives which one lights up. */}
           <div className="projects-rail-track">
             {projects.map((project, index) => (
               <button
@@ -352,7 +395,7 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
                 type="button"
                 className={`rail-item${index === activeIndex ? " is-active" : ""}`}
                 aria-current={index === activeIndex}
-                onClick={() => scrollToProject(index)}
+                onClick={() => selectProject(index)}
               >
                 <span className="rail-row">
                   <span className="rail-thumb">
@@ -372,6 +415,83 @@ function Portfolio({ isProjects, onOpenProject }: PortfolioProps) {
               </button>
             ))}
           </div>
+          <div
+            className="projects-rail-spacer"
+            style={{ height: `${(projects.length - 1) * 22}vh` }}
+            aria-hidden="true"
+          />
+        </nav>
+      </div>
+
+      {/* FOREGROUND experience layer (above the frame): the LEFT scroll panel of
+          categorized entries and the RIGHT CONTENTS rail that scroll-spies through
+          them, its indicator sliding to the active category. */}
+      <div className={`page-fg page-experience${isExperience ? " is-active" : ""}`} aria-hidden={!isExperience}>
+        <div className="exp-scroll" style={fieldStyle} ref={expScrollRef} onScroll={onExpScroll}>
+          <div className="exp-scroll-inner">
+            {experience.map((cat, i) => (
+              <section
+                className="exp-section"
+                data-cat={cat.key}
+                key={cat.key}
+                ref={(node) => {
+                  expSectionRefs.current[cat.key] = node;
+                }}
+              >
+                <div className="exp-section-head">
+                  <span className="exp-count">
+                    {String(i + 1).padStart(2, "0")} / {cat.entries.length}{" "}
+                    {cat.entries.length === 1 ? "ENTRY" : "ENTRIES"}
+                  </span>
+                  <div className="exp-title-row">
+                    <span className="exp-dot" style={{ background: cat.color }} />
+                    <h2 className="exp-title">{cat.label}</h2>
+                  </div>
+                </div>
+                <div className="exp-entries">
+                  {cat.entries.map((entry) => (
+                    <div className="exp-entry" key={`${cat.key}-${entry.title}`}>
+                      <div className="exp-entry-copy">
+                        <div className="exp-entry-title">{entry.title}</div>
+                        <div className="exp-entry-sub">{entry.sub}</div>
+                      </div>
+                      <div className={`exp-entry-meta${entry.win ? " is-win" : ""}`}>{entry.meta}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+
+        <nav className="exp-toc" style={railStyle} aria-label="Experience contents">
+          <span className="exp-toc-label">CONTENTS</span>
+          <div className="exp-toc-list">
+            {expIndicator && (
+              <span
+                className="exp-toc-indicator"
+                aria-hidden="true"
+                style={{ transform: `translateY(${expIndicator.y}px)`, height: `${expIndicator.h}px` }}
+              />
+            )}
+            {experience.map((cat) => (
+              <button
+                key={cat.key}
+                type="button"
+                className={`exp-toc-item${cat.key === expActive ? " is-active" : ""}`}
+                aria-current={cat.key === expActive}
+                onClick={() => scrollToCat(cat.key)}
+                ref={(node) => {
+                  expTocRefs.current[cat.key] = node;
+                }}
+              >
+                <span className="exp-toc-dot" style={{ background: cat.color }} />
+                <span className="exp-toc-name">{cat.label}</span>
+                <span className="exp-toc-count">{String(cat.entries.length).padStart(2, "0")}</span>
+              </button>
+            ))}
+          </div>
+          <span className="exp-toc-footer">EUGENE&nbsp;LEE&nbsp;·&nbsp;WATERLOO</span>
         </nav>
       </div>
     </section>
@@ -449,12 +569,15 @@ export default function App() {
     return () => window.removeEventListener("wheel", onWheel);
   }, []);
 
-  const isProjectsPage = path === "/projects";
+  const route: Route =
+    path === "/projects" ? "projects" : path === "/experience" ? "experience" : "home";
+  const shellClass =
+    route === "home" ? "app-shell home-shell" : `app-shell ${route}-shell`;
 
   return (
     <>
-      <main className={isProjectsPage ? "app-shell projects-shell" : "app-shell home-shell"}>
-        <Portfolio isProjects={isProjectsPage} onOpenProject={setSelectedProject} />
+      <main className={shellClass}>
+        <Portfolio route={route} onOpenProject={setSelectedProject} />
       </main>
       <ProjectDialog project={selectedProject} onClose={() => setSelectedProject(null)} />
     </>
