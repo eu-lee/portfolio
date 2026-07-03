@@ -185,6 +185,13 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeProject = projects[activeIndex];
   const activeIndexRef = useRef(0);
+  // Measured top offset that sits the stage thumbnail at the vertical middle of
+  // the stage. It's a function of the stage height and the (content-independent)
+  // thumbnail height only, so every project's thumbnail/title/metadata anchor to
+  // the SAME spot; the description flows below and scrolls when it overflows.
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const coverRef = useRef<HTMLDivElement | null>(null);
+  const [stageLead, setStageLead] = useState(0);
   const railRef = useRef<HTMLElement | null>(null);
   const railRafRef = useRef<number | null>(null);
   const projectButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -205,6 +212,36 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       if (railGlideTimer.current != null) clearTimeout(railGlideTimer.current);
     };
   }, []);
+
+  // Center the thumbnail in the stage by measuring, so its resting position is
+  // identical for every project (independent of description length). The offset
+  // pushes the top of the block down to (stageHeight - thumbnailHeight) / 2,
+  // discounting the stage's own top padding. Re-measured whenever the projects
+  // view is shown, the grid resolves, or anything resizes — the first mount reads
+  // stale sizes (grid unresolved, layer laid out at defaults), so a one-shot
+  // measure isn't enough. Zero-size reads are skipped so we never latch a bad 0.
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const cover = coverRef.current;
+    if (!stage || !cover) return;
+    const measure = () => {
+      const H = stage.clientHeight;
+      const coverH = cover.offsetHeight;
+      if (!H || !coverH) return;
+      const padTop = parseFloat(getComputedStyle(stage).paddingTop) || 0;
+      setStageLead(Math.max(0, Math.round(H / 2 - padTop - coverH / 2)));
+    };
+    measure();
+    const raf = requestAnimationFrame(measure);
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    observer.observe(cover);
+    document.fonts?.ready.then(measure);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
+  }, [isProjects, grid]);
 
   // Map scroll progress (0 → top, 1 → bottom of the spacer) to the entry index.
   const updateActiveFromRail = () => {
@@ -396,21 +433,57 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       {/* FOREGROUND projects layer (above the frame): the LEFT stage (the active
           project, large) and the RIGHT index rail (every project, navigable). */}
       <div className={`page-fg page-projects${isProjects ? " is-active" : ""}`} aria-hidden={!isProjects}>
-        <div className="projects-stage" style={fieldStyle}>
-          <div className="stage-cover">
-            {activeProject.thumbnail ? (
-              <img src={activeProject.thumbnail} alt={`${activeProject.title} cover`} />
-            ) : (
-              <div className="media-placeholder" aria-hidden="true" />
-            )}
-          </div>
-
-          <div className="stage-meta">
-            <div className="stage-top">
-              <span className="stage-num">{String(activeIndex + 1).padStart(2, "0")}</span>
+        <div className="projects-stage" style={fieldStyle} ref={stageRef}>
+          <div className="stage-inner" style={{ "--stage-lead": `${stageLead}px` } as CssVars}>
+            {/* The media slot embeds a link-less YouTube player when the project
+                has a video, otherwise the cover image, otherwise a placeholder. */}
+            <div className="stage-cover" ref={coverRef}>
+              {activeProject.video ? (
+                <iframe
+                  className="stage-video"
+                  src={activeProject.video}
+                  title={`${activeProject.title} video`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : activeProject.cover ? (
+                <img src={activeProject.cover} alt={`${activeProject.title} cover`} />
+              ) : (
+                <div className="media-placeholder" aria-hidden="true" />
+              )}
             </div>
-            <h1 className="stage-title">{activeProject.title}</h1>
-            <p className="stage-sub">{activeProject.subtitle}</p>
+
+            <div className="stage-meta">
+              <h1 className="stage-title">{activeProject.title}</h1>
+              {activeProject.links && activeProject.links.length > 0 && (
+                <div className="stage-links">
+                  {activeProject.links.map((link) => (
+                    <a
+                      key={`${link.label}-${link.href}`}
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+              {activeProject.technologies && activeProject.technologies.length > 0 && (
+                <ul className="stage-tech">
+                  {activeProject.technologies.map((tech) => (
+                    <li key={tech}>{tech}</li>
+                  ))}
+                </ul>
+              )}
+              {activeProject.description && activeProject.description.length > 0 && (
+                <div className="stage-body">
+                  {activeProject.description.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -447,6 +520,9 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
                   <span className="rail-copy">
                     <span className="rail-heading">
                       <span className="rail-name">{project.title}</span>
+                      {project.dateLabel && (
+                        <span className="rail-date">({project.dateLabel})</span>
+                      )}
                     </span>
                     <span className="rail-summary">{project.summary}</span>
                   </span>
