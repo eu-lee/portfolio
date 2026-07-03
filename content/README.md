@@ -33,9 +33,9 @@ the Markdown body is the description (blank-line-separated paragraphs).
 order: 2                 # ascending — position in the rail
 title: Graph Pathfinder
 subtitle: A* and Dijkstra visualizer
-board: graph             # heat | layers | bars | graph
 featured: true
-cover: null              # null → generated brick board; or a filename; or a URL
+cover: null              # null → blue placeholder; or a filename; or a URL
+video: null              # optional YouTube link; embedded on the detail view
 summary: Watch A* and Dijkstra race across a weighted grid.
 links:
   - label: Live demo

@@ -2,7 +2,6 @@
 order: 2
 title: Graph Pathfinder
 subtitle: A* and Dijkstra visualizer
-board: graph
 featured: true
 cover: null
 summary: Watch A* and Dijkstra race across a weighted grid.

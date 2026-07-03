@@ -2,7 +2,6 @@
 order: 4
 title: SortLab
 subtitle: Sorting algorithm playground
-board: bars
 featured: false
 cover: null
 summary: See comparisons, swaps, and complexity emerge live.

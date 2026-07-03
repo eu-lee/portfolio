@@ -692,18 +692,33 @@ h3 {
   background: var(--dark);
 }
 
-.dialog-hero .brick-grid {
-  height: 220px;
-  overflow: hidden;
-  border-radius: 6px;
-}
-
 .dialog-hero .cover-image {
   display: block;
   width: 100%;
   height: 220px;
   object-fit: cover;
   border-radius: 6px;
+}
+
+.dialog-hero .cover-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 6px;
+}
+
+.dialog-hero .media-placeholder {
+  height: 220px;
+  border-radius: 6px;
+}
+
+/* Stand-in shown wherever a project has no cover/video yet, so the empty slot
+   is obvious against the dark UI. */
+.media-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--blue);
 }
 
 .dialog-content {
@@ -800,8 +815,8 @@ h3 {
   overflow-y: auto;
 }
 
-/* Solid dark plate so the brick board reads as a thumbnail against it, not
-   against the brick wall behind the frame (same treatment the tiles used). */
+/* Solid dark plate so the cover reads as a thumbnail against it, not against
+   the brick wall behind the frame (same treatment the tiles used). */
 .stage-cover {
   width: 100%;
   max-width: min(640px, 100%);
@@ -895,9 +910,9 @@ h3 {
 }
 
 .rail-item {
-  /* Text size knobs. The active row bumps these and the children ease toward them,
-     so the entry's text expands in place instead of only
-     changing color. The thumbnail stays a fixed size so nothing shifts sideways. */
+  /* Size knobs. The active row bumps these and the children ease toward them,
+     so the entry's text and thumbnail expand in place instead of only
+     changing color. */
   --thumb-size: 64px;
   --name-size: 15px;
   --summary-size: 11px;
@@ -922,6 +937,7 @@ h3 {
 .rail-item.is-active {
   --name-size: 23px;
   --summary-size: 13px;
+  --thumb-size: 82px;
   opacity: 1;
 }
 .rail-item:focus-visible {
@@ -946,6 +962,7 @@ h3 {
   border-radius: 0;
   background: var(--dark);
   contain: layout paint;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .rail-thumb > * { width: 100%; height: 100%; }
 .rail-thumb img { display: block; object-fit: cover; }

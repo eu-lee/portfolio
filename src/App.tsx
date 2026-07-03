@@ -2,7 +2,6 @@ import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode, UIEvent } fro
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
-import { BrickGrid, BrickThumb } from "./components/BrickGrid";
 import { useStudGrid } from "./lib/heroGrid";
 import heroBackground from "../content/backgrounds/bkg4.gif";
 import aboutMarkdown from "../content/about/index.md?raw";
@@ -192,7 +191,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   // Set while a click/keyboard selection is smooth-scrolling the rail. During
   // that glide the scroll sweeps past every entry in between; without this guard
   // updateActiveFromRail would flip activeIndex (and re-render the heavy stage
-  // board) for each one. We hold the target until the scroll lands on it.
+  // cover) for each one. We hold the target until the scroll lands on it.
   const railGlideRef = useRef(false);
   const railGlideTimer = useRef<number | null>(null);
 
@@ -242,7 +241,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       const max = rail.scrollHeight - rail.clientHeight;
       // Lock out intermediate scroll updates for the duration of the glide so
       // the stage jumps straight to `next` instead of flipping through every
-      // board on the way. The timer is a fallback in case the scroll settles a
+      // cover on the way. The timer is a fallback in case the scroll settles a
       // hair off the exact target and never trips the equality check.
       railGlideRef.current = true;
       if (railGlideTimer.current != null) clearTimeout(railGlideTimer.current);
@@ -399,10 +398,10 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       <div className={`page-fg page-projects${isProjects ? " is-active" : ""}`} aria-hidden={!isProjects}>
         <div className="projects-stage" style={fieldStyle}>
           <div className="stage-cover">
-            {activeProject.cover ? (
-              <img src={activeProject.cover} alt={`${activeProject.title} cover`} />
+            {activeProject.thumbnail ? (
+              <img src={activeProject.thumbnail} alt={`${activeProject.title} cover`} />
             ) : (
-              <BrickGrid type={activeProject.board} width={24} height={12} />
+              <div className="media-placeholder" aria-hidden="true" />
             )}
           </div>
 
@@ -439,10 +438,10 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
               >
                 <span className="rail-row">
                   <span className="rail-thumb">
-                    {project.cover ? (
-                      <img src={project.cover} alt="" />
+                    {project.thumbnail ? (
+                      <img src={project.thumbnail} alt="" />
                     ) : (
-                      <BrickThumb type={project.board} width={12} height={8} />
+                      <div className="media-placeholder" aria-hidden="true" />
                     )}
                   </span>
                   <span className="rail-copy">
@@ -508,10 +507,18 @@ function ProjectDialog({ project, onClose }: ProjectDialogProps) {
           ×
         </button>
         <div className="dialog-hero">
-          {project.cover ? (
+          {project.video ? (
+            <iframe
+              className="cover-video"
+              src={project.video}
+              title={`${project.title} video`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : project.cover ? (
             <img className="cover-image" src={project.cover} alt={`${project.title} cover`} />
           ) : (
-            <BrickGrid type={project.board} width={24} height={9} />
+            <div className="media-placeholder" aria-hidden="true" />
           )}
         </div>
         <div className="dialog-content">

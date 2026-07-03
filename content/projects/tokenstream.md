@@ -2,7 +2,6 @@
 order: 3
 title: TokenStream
 subtitle: Tiny LLM inference engine
-board: layers
 featured: false
 cover: null
 summary: A tiny, readable LLM inference engine.

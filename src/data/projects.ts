@@ -8,16 +8,16 @@ import matter from "gray-matter";
 //   order        number, ascending — controls position in the rail
 //   summary      one line, shown in the rail
 //   links        optional list of { label, href } actions
-//   cover        optional cover image. Use null for the generated brick board
-//                fallback. To use an image, drop the file alongside this .md in
-//                content/projects/ and reference it by filename, e.g.
-//                cover: tokenstream.png — it's bundled and content-hashed by
-//                Vite, so a typo fails the build instead of 404-ing. A full URL
-//                (https://…) is also accepted and used verbatim.
+//   cover        optional cover image, used for the rail thumbnail and the large
+//                stage. Use null for a blue placeholder box. To use an image,
+//                drop the file alongside this .md in content/projects/ and
+//                reference it by filename, e.g. cover: tokenstream.png — it's
+//                bundled and content-hashed by Vite, so a typo fails the build
+//                instead of 404-ing. A full URL (https://…) is also accepted.
+//   video        optional YouTube link (watch, youtu.be, or shorts URL). When
+//                set, the detail view embeds the player instead of the cover.
 // The Markdown body (below the frontmatter) is the description: write plain
 // paragraphs separated by a blank line. They render in the detail dialog.
-
-export type BoardType = "heat" | "layers" | "bars" | "graph";
 
 export type ProjectLink = {
   label: string;
@@ -28,15 +28,18 @@ export type Project = {
   id: string;
   title: string;
   subtitle: string;
-  board: BoardType;
   featured?: boolean;
   cover: string | null;
+  video?: string;
+  // Derived, not authored: the rail/stage image. It's the cover if set, else the
+  // video's poster frame, else null (blue placeholder). Displayed cropped.
+  thumbnail: string | null;
   summary: string;
   description?: string[];
   links?: ProjectLink[];
 };
 
-type ProjectFrontmatter = Omit<Project, "id" | "description"> & { order?: number };
+type ProjectFrontmatter = Omit<Project, "id" | "description" | "thumbnail"> & { order?: number };
 
 // Vite inlines every markdown file as a raw string at build time.
 const files = import.meta.glob("../../content/projects/*.md", {
@@ -69,6 +72,33 @@ function resolveCover(cover: string | null | undefined): string | null {
   return match[1];
 }
 
+// Pull the 11-char id out of any common YouTube URL (watch?v=, youtu.be/,
+// /shorts/, /embed/). Returns null for non-YouTube or unrecognized values.
+function youTubeId(video: string | null | undefined): string | null {
+  if (!video) return null;
+  const match = video.match(
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+  );
+  return match ? match[1] : null;
+}
+
+// Embeddable player URL. A recognized YouTube link becomes an /embed/ URL;
+// anything else passes through so a direct embed URL still works (a bad link
+// surfaces as a broken iframe, not a build failure).
+function resolveVideo(video: string | null | undefined): string | undefined {
+  if (!video) return undefined;
+  const id = youTubeId(video);
+  return id ? `https://www.youtube.com/embed/${id}` : video;
+}
+
+// Rail/stage image: the cover if set, else the video's YouTube poster frame,
+// else null (blue placeholder). hqdefault always exists for a valid id.
+function resolveThumbnail(cover: string | null, video: string | null | undefined): string | null {
+  if (cover) return cover;
+  const id = youTubeId(video);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
 function toParagraphs(body: string): string[] {
   return body
     .trim()
@@ -82,15 +112,17 @@ export const projects: Project[] = Object.entries(files)
     const { data, content } = matter(raw);
     const fm = data as ProjectFrontmatter;
     const description = toParagraphs(content);
+    const cover = resolveCover(fm.cover);
     return {
       order: fm.order ?? 0,
       project: {
         id: idFromPath(path),
         title: fm.title,
         subtitle: fm.subtitle,
-        board: fm.board,
         featured: fm.featured,
-        cover: resolveCover(fm.cover),
+        cover,
+        video: resolveVideo(fm.video),
+        thumbnail: resolveThumbnail(cover, fm.video),
         summary: fm.summary,
         description: description.length ? description : undefined,
         links: fm.links,

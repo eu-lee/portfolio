@@ -2,7 +2,6 @@
 order: 1
 title: Attention Atlas
 subtitle: Transformer attention explorer
-board: heat
 featured: false
 cover: null
 summary: Transformer attention, made legible head by head.
