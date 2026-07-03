@@ -838,11 +838,11 @@ h3 {
 .stage-top {
   display: flex;
   align-items: baseline;
-  margin-bottom: 14px;
+  margin-bottom: clamp(10px, 1.6svh, 20px);
 }
 .stage-num {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: clamp(11px, min(0.95vw, 1.5svh), 16px);
   color: #8b9296;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
@@ -857,9 +857,9 @@ h3 {
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
 }
 .stage-sub {
-  margin: 14px 0 0;
+  margin: clamp(10px, 1.6svh, 20px) 0 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: clamp(11px, min(0.95vw, 1.5svh), 16px);
   letter-spacing: 0.04em;
   color: #aab0b3;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
@@ -868,9 +868,10 @@ h3 {
    The left side is the viewer, so the rail stays descriptive but scannable. */
 .projects-rail {
   /* Row height fixed at the EXPANDED size so the active row grows its text IN PLACE
-     without reflowing the list. */
-  --rail-item-h: 84px;
-  --rail-gap: 8px;
+     without reflowing the list. Scales with the viewport like the rest of the
+     frame so the list keeps its proportions on large / high-res screens. */
+  --rail-item-h: clamp(74px, min(6.4vw, 9.8svh), 116px);
+  --rail-gap: clamp(6px, 1svh, 12px);
   --rail-inline-pad: var(--frame-pad);
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
@@ -913,9 +914,9 @@ h3 {
   /* Size knobs. The active row bumps these and the children ease toward them,
      so the entry's text and thumbnail expand in place instead of only
      changing color. */
-  --thumb-size: 64px;
-  --name-size: 15px;
-  --summary-size: 11px;
+  --thumb-size: clamp(52px, min(4.6vw, 7svh), 84px);
+  --name-size: clamp(13px, min(1.15vw, 1.75svh), 18px);
+  --summary-size: clamp(10px, min(0.9vw, 1.35svh), 13px);
   flex: none;
   display: flex;
   flex-direction: column;
@@ -935,9 +936,9 @@ h3 {
   opacity: 0.75;
 }
 .rail-item.is-active {
-  --name-size: 23px;
-  --summary-size: 13px;
-  --thumb-size: 82px;
+  --name-size: clamp(19px, min(1.75vw, 2.65svh), 30px);
+  --summary-size: clamp(12px, min(1.05vw, 1.6svh), 16px);
+  --thumb-size: clamp(66px, min(5.9vw, 9svh), 108px);
   opacity: 1;
 }
 .rail-item:focus-visible {
@@ -949,7 +950,7 @@ h3 {
 .rail-row {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: clamp(14px, 1.4vw, 26px);
   height: 100%;
 }
 .rail-thumb {
@@ -971,7 +972,7 @@ h3 {
 .rail-copy {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: clamp(4px, 0.6svh, 8px);
   min-width: 0;
 }
 .rail-heading {
@@ -1055,9 +1056,9 @@ h3 {
 .about-markdown {
   display: grid;
   justify-items: start;
-  gap: clamp(14px, 2.5vh, 26px);
+  gap: clamp(14px, 2.5svh, 30px);
   width: fit-content;
-  max-width: 820px;
+  max-width: min(90%, 1040px);
   text-align: left;
 }
 
@@ -1071,7 +1072,7 @@ h3 {
 .about-md-heading {
   max-width: 28ch;
   font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(22px, min(2.15vw, 3.8vh), 34px);
+  font-size: clamp(22px, min(2.3vw, 3.6svh), 42px);
   font-weight: 500;
   line-height: 1.25;
   letter-spacing: 0;
@@ -1081,7 +1082,7 @@ h3 {
 .about-md-paragraph {
   max-width: 78ch;
   font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(12px, min(1.02vw, 1.75vh), 15px);
+  font-size: clamp(13px, min(1.15vw, 1.7svh), 18px);
   font-weight: 400;
   line-height: 1.62;
   letter-spacing: 0;
