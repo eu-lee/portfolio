@@ -813,6 +813,29 @@ h3 {
   overflow-y: auto;
 }
 
+.projects-stage-fade {
+  --stage-top-fade: clamp(44px, 7svh, 84px);
+  position: absolute;
+  top: calc(var(--wire-top) + var(--nav-band) + 1px);
+  left: var(--wire-left); /* inline override snaps to the divider */
+  z-index: 4;
+  height: var(--stage-top-fade);
+  pointer-events: none;
+  opacity: 0;
+  clip-path: inset(0 1px 0 1px);
+  background: linear-gradient(
+    to bottom,
+    #000 0,
+    rgba(0, 0, 0, 0.92) 18%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  transition: opacity 0.18s ease;
+}
+
+.projects-stage-fade.is-visible {
+  opacity: 1;
+}
+
 /* Centered content column. Wider than the old 640 cap so the title (and the
    left-aligned description written later) get more room to breathe, while the
    whole block stays centered in the stage. The cover and the copy share this
@@ -823,8 +846,8 @@ h3 {
   align-items: stretch;
   align-self: center;
   width: 100%;
-  max-width: min(760px, 100%);
-  gap: clamp(20px, 3.4svh, 40px);
+  max-width: min(700px, 92%);
+  gap: clamp(18px, 3svh, 34px);
   /* The block is TOP-anchored, not vertically centered, so the thumbnail/title/
      metadata land in the exact same spot for every project regardless of how
      much description follows. The top offset is measured (App.tsx) to sit the
@@ -864,12 +887,12 @@ h3 {
 .stage-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 12px;
+  gap: clamp(12px, 1.4vw, 18px);
+  margin-top: clamp(10px, 1.4svh, 14px);
 }
 .stage-links a {
   font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(11px, min(0.95vw, 1.5svh), 16px);
+  font-size: clamp(11px, min(0.88vw, 1.35svh), 14px);
   letter-spacing: 0.02em;
   color: #aab0b3;
   text-decoration: underline;
@@ -883,15 +906,15 @@ h3 {
 /* Technologies used — a tag row under the links. */
 .stage-tech {
   list-style: none;
-  margin: 16px 0 0;
+  margin: clamp(12px, 1.8svh, 18px) 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
 }
 .stage-tech li {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: clamp(10px, min(0.76vw, 1.12svh), 12px);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #aab0b3;
@@ -902,16 +925,16 @@ h3 {
 
 /* Project description — the markdown body, left-aligned under the title. */
 .stage-body {
-  margin-top: 24px;
+  margin-top: clamp(18px, 2.6svh, 24px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: clamp(10px, 1.5svh, 14px);
 }
 .stage-body p {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(12px, min(1vw, 1.55svh), 16px);
-  line-height: 1.65;
+  font-size: clamp(12px, min(0.94vw, 1.42svh), 15px);
+  line-height: 1.6;
   color: rgba(255, 255, 255, 0.62);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
