@@ -191,6 +191,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   // the SAME spot; the description flows below and scrolls when it overflows.
   const stageRef = useRef<HTMLDivElement | null>(null);
   const coverRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [stageLead, setStageLead] = useState(0);
   const railRef = useRef<HTMLElement | null>(null);
   const railRafRef = useRef<number | null>(null);
@@ -213,23 +214,30 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     };
   }, []);
 
-  // Center the thumbnail in the stage by measuring, so its resting position is
-  // identical for every project (independent of description length). The offset
-  // pushes the top of the block down to (stageHeight - thumbnailHeight) / 2,
-  // discounting the stage's own top padding. Re-measured whenever the projects
+  // Sit the project TITLE at the vertical middle of the stage by measuring, so
+  // its resting position is identical for every project (independent of
+  // description length). The offset pushes the block down until the title's
+  // center lands on the stage's mid-line, discounting the stage's own top
+  // padding, and is clamped to >= 0 so the thumbnail is never pulled above the
+  // top (which would clip it un-scrollably). Re-measured whenever the projects
   // view is shown, the grid resolves, or anything resizes — the first mount reads
   // stale sizes (grid unresolved, layer laid out at defaults), so a one-shot
   // measure isn't enough. Zero-size reads are skipped so we never latch a bad 0.
   useLayoutEffect(() => {
     const stage = stageRef.current;
     const cover = coverRef.current;
-    if (!stage || !cover) return;
+    const title = titleRef.current;
+    if (!stage || !cover || !title) return;
     const measure = () => {
       const H = stage.clientHeight;
-      const coverH = cover.offsetHeight;
-      if (!H || !coverH) return;
+      if (!H || !cover.offsetHeight) return;
       const padTop = parseFloat(getComputedStyle(stage).paddingTop) || 0;
-      setStageLead(Math.max(0, Math.round(H / 2 - padTop - coverH / 2)));
+      // Title-center distance from the top of the block, independent of the
+      // current lead (both rects shift together, so their delta is stable).
+      const coverTop = cover.getBoundingClientRect().top;
+      const titleRect = title.getBoundingClientRect();
+      const titleCenterFromBlockTop = titleRect.top + titleRect.height / 2 - coverTop;
+      setStageLead(Math.max(0, Math.round(H / 2 - padTop - titleCenterFromBlockTop)));
     };
     measure();
     const raf = requestAnimationFrame(measure);
@@ -454,7 +462,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
             </div>
 
             <div className="stage-meta">
-              <h1 className="stage-title">{activeProject.title}</h1>
+              <h1 className="stage-title" ref={titleRef}>{activeProject.title}</h1>
               {activeProject.links && activeProject.links.length > 0 && (
                 <div className="stage-links">
                   {activeProject.links.map((link) => (
