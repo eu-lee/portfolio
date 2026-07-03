@@ -808,44 +808,48 @@ h3 {
   z-index: 3;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: clamp(20px, 3.4svh, 40px);
   padding: var(--frame-pad);
   min-height: 0;
   overflow-y: auto;
+}
+
+/* Centered content column. Wider than the old 640 cap so the title (and the
+   left-aligned description written later) get more room to breathe, while the
+   whole block stays centered in the stage. The cover and the copy share this
+   column's left/right edges, so text left-aligns cleanly under the media. */
+.stage-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: center;
+  width: 100%;
+  max-width: min(760px, 100%);
+  gap: clamp(20px, 3.4svh, 40px);
+  /* The block is TOP-anchored, not vertically centered, so the thumbnail/title/
+     metadata land in the exact same spot for every project regardless of how
+     much description follows. The top offset is measured (App.tsx) to sit the
+     thumbnail at the stage's middle, and applied inline as margin-top; the
+     description simply flows below and scrolls the stage when it overflows. */
+  margin-top: var(--stage-lead, 0px);
 }
 
 /* Solid dark plate so the cover reads as a thumbnail against it, not against
    the brick wall behind the frame (same treatment the tiles used). */
 .stage-cover {
   width: 100%;
-  max-width: min(640px, 100%);
   aspect-ratio: 24 / 12;
-  align-self: center;
   overflow: hidden;
   border-radius: 4px;
   background: var(--dark);
 }
 .stage-cover > * { width: 100%; height: 100%; }
 .stage-cover img { display: block; object-fit: cover; }
+.stage-cover .stage-video { display: block; border: 0; }
 
 .stage-meta {
-  align-self: center;
   width: 100%;
-  max-width: min(640px, 100%);
 }
 
-.stage-top {
-  display: flex;
-  align-items: baseline;
-  margin-bottom: clamp(10px, 1.6svh, 20px);
-}
-.stage-num {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(11px, min(0.95vw, 1.5svh), 16px);
-  color: #8b9296;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-}
 .stage-title {
   margin: 0;
   font-family: "Archivo", system-ui, sans-serif;
@@ -856,12 +860,59 @@ h3 {
   color: #fff;
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
 }
-.stage-sub {
-  margin: clamp(10px, 1.6svh, 20px) 0 0;
+/* Link row immediately under the title — GitHub, Devpost, live demo, etc. */
+.stage-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+}
+.stage-links a {
   font-family: "IBM Plex Mono", monospace;
   font-size: clamp(11px, min(0.95vw, 1.5svh), 16px);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: #aab0b3;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color 0.15s ease;
+}
+.stage-links a:hover {
+  color: #fff;
+}
+
+/* Technologies used — a tag row under the links. */
+.stage-tech {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.stage-tech li {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #aab0b3;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+/* Project description — the markdown body, left-aligned under the title. */
+.stage-body {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stage-body p {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: clamp(12px, min(1vw, 1.55svh), 16px);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.62);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
 /* RIGHT index rail beyond the vertical divider: a compact project navigation.
@@ -989,6 +1040,18 @@ h3 {
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
   transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.24s ease;
 }
+
+.rail-date {
+  margin-left: 8px;
+  flex: none;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.34);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  transition: color 0.24s ease;
+}
+.rail-item.is-active .rail-date { color: rgba(255, 255, 255, 0.5); }
 
 .rail-summary {
   display: -webkit-box;

@@ -6,6 +6,3 @@ Now, I'm in my second year at the [University of Waterloo](https://uwaterloo.ca)
 
 This summer, I'm working at [Eureka DevSecOps](https://www.eurekadevsecops.com), where I build agents that leverage security scanners to detect and automatically remediate code vulnerabilities.
 
-I also like attending hackathons; you can view some of my projects on my [Devpost](https://devpost.com/eu-lee).
-
-Feel free to reach out.
