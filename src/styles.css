@@ -952,7 +952,10 @@ h3 {
   flex-direction: column;
   justify-content: center;
   gap: var(--rail-gap);
-  padding: 0 var(--rail-inline-pad);
+  /* Asymmetric: a slim left indent shifts the whole list left so the active
+     row's single-line name + date has room on the right and no longer collides
+     with the frame wire. */
+  padding: 0 var(--rail-inline-pad) 0 clamp(6px, 0.7vw, 12px);
 }
 
 /* Invisible scroll length — its height sets how far you scroll to move through the
@@ -1036,6 +1039,10 @@ h3 {
   font-weight: 800;
   font-size: var(--name-size);
   letter-spacing: -0.005em;
+  /* Keep every title on ONE line in both states. Without this the name wraps
+     only in the active row (its font jumps to ~30px), so a longer title like
+     "Plant Hopper" reads as two lines active but one line collapsed. */
+  white-space: nowrap;
   color: rgba(255, 255, 255, 0.55);
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
   transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.24s ease;
