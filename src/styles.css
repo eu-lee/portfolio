@@ -1008,6 +1008,12 @@ h3 {
   cursor: pointer;
   opacity: 0.4;
   transition: opacity 0.24s ease;
+  /* Each row is its own compositor layer so its size/opacity transition repaints
+     in isolation. Without this the rows share the GPU-promoted .page-fg texture,
+     and when the active row resizes the layer isn't fully invalidated — leaving a
+     ghost of the previous (larger) row, so the old and new sizes appear at once. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .rail-item:hover {
   opacity: 0.75;

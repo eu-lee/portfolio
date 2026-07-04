@@ -278,14 +278,23 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     if (!rail) return;
     const max = rail.scrollHeight - rail.clientHeight;
     const progress = max > 0 ? Math.min(1, Math.max(0, rail.scrollTop / max)) : 0;
-    const nearestIndex = Math.round(progress * (projects.length - 1));
+    const pos = progress * (projects.length - 1);
+    const current = activeIndexRef.current;
     // During a click/keyboard glide, swallow the intermediate steps and only
     // release once the scroll has settled on the target (activeIndexRef).
     if (railGlideRef.current) {
-      if (nearestIndex === activeIndexRef.current) railGlideRef.current = false;
+      if (Math.round(pos) === current) railGlideRef.current = false;
       return;
     }
-    if (nearestIndex !== activeIndexRef.current) setActiveIndex(nearestIndex);
+    // Hysteresis: hold the current entry until the scroll has moved DECISIVELY
+    // toward a neighbour (past the midpoint + a dead zone). Without this, slow
+    // scrolling that parks near the exact .5 boundary lets pixel-level jitter
+    // toggle activeIndex back and forth — which flickers the rail highlight and
+    // thrashes the heavy stage cover (a re-render per flip), the lag you saw.
+    const DEAD_ZONE = 0.18;
+    if (Math.abs(pos - current) <= 0.5 + DEAD_ZONE) return;
+    const nextIndex = Math.round(pos);
+    if (nextIndex !== current) setActiveIndex(nextIndex);
   };
 
   // rAF-throttled off the native scroll so the highlight glides with the momentum.
