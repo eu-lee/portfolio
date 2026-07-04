@@ -1078,7 +1078,10 @@ h3 {
 }
 
 .rail-date {
-  margin-left: 8px;
+  /* Push the date to the right edge of the row so titles sit hard-left and dates
+     hard-right; padding-left keeps a gap if a long title reaches across. */
+  margin-left: auto;
+  padding-left: 12px;
   flex: none;
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
