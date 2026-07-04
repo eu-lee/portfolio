@@ -97,13 +97,19 @@ function idFromPath(path: string): string {
 
 // Resolve a frontmatter `cover` value to a usable URL: null stays null (brick
 // fallback), a full URL passes through, and a bare filename maps to the
-// colocated, bundled image.
+// colocated, bundled image. A missing file degrades to the black-box
+// placeholder (and warns) rather than throwing — a bad/absent cover should
+// never take the whole site down.
 function resolveCover(cover: string | null | undefined): string | null {
   if (!cover) return null;
   if (/^https?:\/\//.test(cover)) return cover;
   const match = Object.entries(covers).find(([path]) => path.endsWith(`/${cover}`));
   if (!match) {
-    throw new Error(`Project cover "${cover}" not found in content/projects/ or content/images/`);
+    console.warn(
+      `Project cover "${cover}" not found in content/projects/ or content/images/; using placeholder.`,
+    );
+    const placeholder = Object.entries(covers).find(([path]) => path.endsWith("/placeholder.svg"));
+    return placeholder ? placeholder[1] : null;
   }
   return match[1];
 }
