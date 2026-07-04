@@ -193,6 +193,8 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   const coverRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [stageLead, setStageLead] = useState(0);
+  const [stageScrolled, setStageScrolled] = useState(false);
+  const stageScrolledRef = useRef(false);
   const railRef = useRef<HTMLElement | null>(null);
   const railRafRef = useRef<number | null>(null);
   const projectButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -250,6 +252,25 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       observer.disconnect();
     };
   }, [isProjects, grid]);
+
+  const syncStageScrolled = (scrollTop: number) => {
+    const next = scrollTop > 2;
+    if (next === stageScrolledRef.current) return;
+    stageScrolledRef.current = next;
+    setStageScrolled(next);
+  };
+
+  useEffect(() => {
+    if (!isProjects) {
+      syncStageScrolled(0);
+      return;
+    }
+    syncStageScrolled(stageRef.current?.scrollTop ?? 0);
+  }, [isProjects, activeIndex]);
+
+  const onStageScroll = (event: UIEvent<HTMLDivElement>) => {
+    syncStageScrolled(event.currentTarget.scrollTop);
+  };
 
   // Map scroll progress (0 → top, 1 → bottom of the spacer) to the entry index.
   const updateActiveFromRail = () => {
@@ -441,7 +462,12 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       {/* FOREGROUND projects layer (above the frame): the LEFT stage (the active
           project, large) and the RIGHT index rail (every project, navigable). */}
       <div className={`page-fg page-projects${isProjects ? " is-active" : ""}`} aria-hidden={!isProjects}>
-        <div className="projects-stage" style={fieldStyle} ref={stageRef}>
+        <div
+          className="projects-stage"
+          style={fieldStyle}
+          ref={stageRef}
+          onScroll={onStageScroll}
+        >
           <div className="stage-inner" style={{ "--stage-lead": `${stageLead}px` } as CssVars}>
             {/* The media slot embeds a link-less YouTube player when the project
                 has a video, otherwise the cover image, otherwise a placeholder. */}
@@ -494,6 +520,11 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
             </div>
           </div>
         </div>
+        <div
+          className={`projects-stage-fade${stageScrolled ? " is-visible" : ""}`}
+          style={fieldStyle}
+          aria-hidden="true"
+        />
 
         <nav
           className="projects-rail"
