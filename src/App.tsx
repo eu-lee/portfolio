@@ -382,7 +382,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
           focalY={0.22}
           mediaDarken={0.28}
           active
-          slowdown={isHome ? 1 : 3}
+          slowdown={isHome ? 2 : 4}
         />
       </div>
 
