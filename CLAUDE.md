@@ -19,8 +19,8 @@ Always `npm run build` (or at least `typecheck`) before calling a change done.
 
 - **Large fonts** — the oversized display type: project **titles** (the active
   project on the projects stage, and each rail entry's name) and the hero
-  nameplate **"EUGENE LEE"** on the home page. Project titles use Bricolage
-  Grotesque (700–800); the hero nameplate uses Instrument Serif (400).
+  nameplate **"EUGENE LEE"** on the home page. Both the hero nameplate and the
+  project titles use Instrument Serif (400).
 - **Navbar** — the section links (`home` / `about` / `projects`) pinned to the
   **top-right** of the frame (`.hero-nav` / `.hero-links`).
 - **Right column** — the right-hand cell of the frame. On projects it holds the

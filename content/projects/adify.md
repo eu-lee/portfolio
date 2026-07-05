@@ -4,7 +4,7 @@ title: Adify
 date: 2026-02
 featured: false
 cover: https://www.youtube.com/watch?v=5VPZ7eQiJJI
-summary: Turns unedited B-roll into polished ads.
+summary: Turns footage into polished ads.
 links:
   - label: Devpost
     href: "https://devpost.com/software/adify"

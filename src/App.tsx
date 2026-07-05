@@ -481,7 +481,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
           project, large) and the RIGHT index rail (every project, navigable). */}
       <div className={`page-fg page-projects${isProjects ? " is-active" : ""}`} aria-hidden={!isProjects}>
         <div
-          className="projects-stage"
+          className={`projects-stage${stageScrolled ? " is-scrolled" : ""}`}
           style={fieldStyle}
           ref={stageRef}
           onScroll={onStageScroll}
@@ -538,11 +538,6 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
             </div>
           </div>
         </div>
-        <div
-          className={`projects-stage-fade${stageScrolled ? " is-visible" : ""}`}
-          style={fieldStyle}
-          aria-hidden="true"
-        />
 
         <nav
           className="projects-rail"

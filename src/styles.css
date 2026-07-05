@@ -445,6 +445,8 @@ button {
 .hero-tagline {
   margin: var(--hero-content-gap) 0 0;
   max-width: min(48ch, 100%);
+  /* Same body voice as the project descriptions (.rail-summary / stage copy). */
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
   font-size: var(--hero-copy-size);
   line-height: 1.2;
   color: rgba(255,255,255,0.72);
@@ -820,7 +822,18 @@ h3 {
 /* LEFT stage: the single active project, large. Bounded by the left wire and the
    vertical index divider (left/width set inline from the measured divider X). The
    brick cover is the centerpiece with the project title beneath it. */
+/* Animatable fade height. Registered so the mask below can TRANSITION as the
+   stage scrolls, instead of the fade popping in. */
+@property --stage-fade-h {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 .projects-stage {
+  --stage-top-fade: clamp(44px, 7svh, 84px);
+  /* Grows from 0 (no fade at rest) to --stage-top-fade once scrolled. */
+  --stage-fade-h: 0px;
   position: absolute;
   top: calc(var(--wire-top) + var(--nav-band));
   bottom: var(--wire-bottom-inset);
@@ -831,29 +844,23 @@ h3 {
   padding: var(--frame-pad);
   min-height: 0;
   overflow-y: auto;
+  /* Soften the top edge by masking the stage's OWN pixels — so content
+     (including the cross-origin YouTube iframe, which a separate overlay div
+     can't reliably paint over) dissolves as it scrolls up under the nav wire,
+     instead of hard-clipping. transparent(top) -> opaque hides the top band. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--stage-fade-h));
+          mask-image: linear-gradient(to bottom, transparent 0, #000 var(--stage-fade-h));
+  transition: --stage-fade-h 0.18s ease;
 }
 
-.projects-stage-fade {
-  --stage-top-fade: clamp(44px, 7svh, 84px);
-  position: absolute;
-  top: calc(var(--wire-top) + var(--nav-band) + 1px);
-  left: var(--wire-left); /* inline override snaps to the divider */
-  z-index: 4;
-  height: var(--stage-top-fade);
-  pointer-events: none;
-  opacity: 0;
-  clip-path: inset(0 1px 0 1px);
-  background: linear-gradient(
-    to bottom,
-    #000 0,
-    rgba(0, 0, 0, 0.92) 18%,
-    rgba(0, 0, 0, 0) 100%
-  );
-  transition: opacity 0.18s ease;
+.projects-stage.is-scrolled {
+  --stage-fade-h: var(--stage-top-fade);
 }
 
-.projects-stage-fade.is-visible {
-  opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+  .projects-stage {
+    transition: none;
+  }
 }
 
 /* Centered content column. Wider than the old 640 cap so the title (and the
@@ -895,11 +902,11 @@ h3 {
 
 .stage-title {
   margin: 0;
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
-  font-weight: 800;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
   font-size: clamp(34px, 5vw, 64px);
   line-height: 0.9;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
   color: #fff;
   text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6);
 }
@@ -1012,11 +1019,16 @@ h3 {
      so the entry's text and thumbnail expand in place instead of only
      changing color. */
   --thumb-size: clamp(52px, min(4.6vw, 7svh), 84px);
-  --name-size: clamp(13px, min(1.15vw, 1.75svh), 18px);
-  --summary-size: clamp(12px, min(1.02vw, 1.52svh), 15px);
+  --name-size: clamp(16px, min(1.45vw, 2.2svh), 23px);
+  --summary-size: clamp(12px, min(1.08vw, 1.6svh), 16px);
   flex: none;
   display: flex;
   flex-direction: column;
+  /* Center the row inside its fixed-height slot. The active entry's larger
+     thumbnail makes the row taller than the slot; centering lets that extra
+     height overflow symmetrically (equal gap above and below) instead of
+     top-anchoring and eating only the gap below it. */
+  justify-content: center;
   width: 100%;
   height: var(--rail-item-h);
   text-align: left;
@@ -1037,8 +1049,8 @@ h3 {
   backface-visibility: hidden;
 }
 .rail-item.is-active {
-  --name-size: clamp(19px, min(1.75vw, 2.65svh), 30px);
-  --summary-size: clamp(14px, min(1.2vw, 1.8svh), 18px);
+  --name-size: clamp(23px, min(2.15vw, 3.25svh), 37px);
+  --summary-size: clamp(14px, min(1.28vw, 1.9svh), 19px);
   --thumb-size: clamp(66px, min(5.9vw, 9svh), 108px);
 }
 .rail-item:focus-visible {
@@ -1049,9 +1061,12 @@ h3 {
 /* Collapsed row: small landscape thumb + number/name to its right. */
 .rail-row {
   display: flex;
-  align-items: center;
-  gap: clamp(14px, 1.4vw, 26px);
-  height: 100%;
+  /* Titles top-align with the thumbnail's top edge (not vertically centered on
+     it), so every entry's name sits at a consistent height regardless of thumb
+     size. The small top pad nudges the title's cap line down to meet the thumb
+     border rather than overshooting it. */
+  align-items: flex-start;
+  gap: clamp(9px, 0.85vw, 16px);
 }
 .rail-thumb {
   position: relative;
@@ -1080,6 +1095,10 @@ h3 {
   flex-direction: column;
   gap: clamp(4px, 0.6svh, 8px);
   min-width: 0;
+  flex: 1;
+  /* Nudge the title's cap line down to meet the thumbnail's top border rather
+     than overshooting it once .rail-row switched to flex-start. */
+  padding-top: clamp(1px, 0.35svh, 5px);
 }
 .rail-heading {
   display: flex;
@@ -1087,10 +1106,10 @@ h3 {
   min-width: 0;
 }
 .rail-name {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
-  font-weight: 700;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
   font-size: var(--name-size);
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   /* Keep every title on ONE line in both states. Without this the name wraps
      only in the active row (its font jumps to ~30px), so a longer title like
      "Plant Hopper" reads as two lines active but one line collapsed. */
@@ -1116,7 +1135,7 @@ h3 {
 
 .rail-summary {
   display: -webkit-box;
-  max-width: 28ch;
+  max-width: 40ch;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1191,20 +1210,22 @@ h3 {
 
 .about-md-heading {
   max-width: 28ch;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(22px, min(2.3vw, 3.6svh), 42px);
-  font-weight: 500;
-  line-height: 1.25;
+  /* Matches the hero nameplate + project titles (Instrument Serif 400) so the
+     about page opens in the same display voice as the rest of the site. */
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: clamp(34px, min(3.4vw, 5.2svh), 64px);
+  font-weight: 400;
+  line-height: 1;
   letter-spacing: 0;
-  color: rgba(255, 255, 255, 0.86);
+  color: #fff;
 }
 
 .about-md-paragraph {
   max-width: 78ch;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(13px, min(1.15vw, 1.7svh), 18px);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: clamp(16px, min(1.4vw, 2.05svh), 22px);
   font-weight: 400;
-  line-height: 1.62;
+  line-height: 1.6;
   letter-spacing: 0;
 }
 
