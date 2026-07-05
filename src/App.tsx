@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { useStudGrid } from "./lib/heroGrid";
-import heroBackground from "../content/backgrounds/bkg4.mov";
+import heroBackground from "../content/backgrounds/bkg4.mp4";
 import aboutMarkdown from "../content/about/index.md?raw";
 
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
