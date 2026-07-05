@@ -1021,6 +1021,7 @@ h3 {
   --thumb-size: clamp(52px, min(4.6vw, 7svh), 84px);
   --name-size: clamp(16px, min(1.45vw, 2.2svh), 23px);
   --summary-size: clamp(12px, min(1.08vw, 1.6svh), 16px);
+  --date-size: clamp(12px, min(1.08vw, 1.62svh), 17px);
   flex: none;
   display: flex;
   flex-direction: column;
@@ -1052,6 +1053,7 @@ h3 {
   --name-size: clamp(23px, min(2.15vw, 3.25svh), 37px);
   --summary-size: clamp(14px, min(1.28vw, 1.9svh), 19px);
   --thumb-size: clamp(66px, min(5.9vw, 9svh), 108px);
+  --date-size: clamp(16px, min(1.5vw, 2.25svh), 25px);
 }
 .rail-item:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.5);
@@ -1127,7 +1129,11 @@ h3 {
   padding-left: clamp(10px, 0.9vw, 16px);
   flex: none;
   font-family: "IBM Plex Sans", system-ui, sans-serif;
-  font-size: clamp(12px, min(1.08vw, 1.62svh), 17px);
+  /* Scales with the active bump like --name-size so the date grows in step with
+     the title instead of staying tiny beside the enlarged name. Baseline
+     alignment on .rail-heading keeps both sitting on the same line as it eases. */
+  font-size: var(--date-size);
+  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.5);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
