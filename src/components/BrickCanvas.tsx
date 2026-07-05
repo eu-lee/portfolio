@@ -318,6 +318,19 @@ export function BrickCanvas({
     return () => video.pause();
   }, [kind, ready, src]);
 
+  // Mirror the GIF slowdown for the video path. Off the home route the mosaic is
+  // dimmed and its motion eased: the GIF stretches each frame's delay by
+  // `slowdown` (see the draw loop), and the video equivalent is scaling
+  // playbackRate by 1/slowdown. Its own effect (keyed on `slowdown`) re-times the
+  // running video in place instead of restarting it — matching how the GIF reads
+  // slowdown live from a ref. Clamped to >= 1 so slowdown only ever slows down.
+  useEffect(() => {
+    if (kind !== "video") return;
+    const video = videoElementRef.current;
+    if (!video) return;
+    video.playbackRate = 1 / Math.max(1, slowdown);
+  }, [kind, ready, slowdown]);
+
   // Redraw whenever the shared grid or the loaded image changes. Animated GIFs
   // need repeated draws because a canvas only stores the frame last painted into
   // it; the GIF can keep advancing but the canvas will not update by itself.
