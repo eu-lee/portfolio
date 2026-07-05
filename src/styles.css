@@ -911,8 +911,8 @@ h3 {
   margin-top: clamp(10px, 1.4svh, 14px);
 }
 .stage-links a {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(11px, min(0.88vw, 1.35svh), 14px);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: clamp(13px, min(1.02vw, 1.55svh), 16px);
   letter-spacing: 0.02em;
   color: #aab0b3;
   text-decoration: underline;
@@ -933,8 +933,8 @@ h3 {
   gap: 7px;
 }
 .stage-tech li {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(10px, min(0.76vw, 1.12svh), 12px);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: clamp(12px, min(0.9vw, 1.32svh), 14px);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #aab0b3;
@@ -952,8 +952,8 @@ h3 {
 }
 .stage-body p {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(12px, min(0.94vw, 1.42svh), 15px);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: clamp(14px, min(1.1vw, 1.65svh), 18px);
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.62);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
@@ -1013,7 +1013,7 @@ h3 {
      changing color. */
   --thumb-size: clamp(52px, min(4.6vw, 7svh), 84px);
   --name-size: clamp(13px, min(1.15vw, 1.75svh), 18px);
-  --summary-size: clamp(10px, min(0.9vw, 1.35svh), 13px);
+  --summary-size: clamp(12px, min(1.02vw, 1.52svh), 15px);
   flex: none;
   display: flex;
   flex-direction: column;
@@ -1038,7 +1038,7 @@ h3 {
 }
 .rail-item.is-active {
   --name-size: clamp(19px, min(1.75vw, 2.65svh), 30px);
-  --summary-size: clamp(12px, min(1.05vw, 1.6svh), 16px);
+  --summary-size: clamp(14px, min(1.2vw, 1.8svh), 18px);
   --thumb-size: clamp(66px, min(5.9vw, 9svh), 108px);
 }
 .rail-item:focus-visible {
@@ -1107,8 +1107,8 @@ h3 {
   margin-left: auto;
   padding-left: clamp(10px, 0.9vw, 16px);
   flex: none;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(11px, min(0.95vw, 1.45svh), 15px);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: clamp(12px, min(1.08vw, 1.62svh), 17px);
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.5);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
@@ -1120,7 +1120,7 @@ h3 {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
   font-size: var(--summary-size);
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.64);
