@@ -30,6 +30,10 @@ type BrickCanvasProps = {
   // loop is frozen (the canvas keeps its last frame) so we don't burn CPU
   // rendering a wall nobody can see.
   active?: boolean;
+  // Playback rate for the animated GIF, relative to its native timing. 1 = normal;
+  // >1 slows it down (each frame's delay is multiplied), so the dimmed background
+  // on about/projects can drift more slowly than the home hero.
+  slowdown?: number;
 };
 
 function canvasContext(canvas: HTMLCanvasElement, options?: CanvasRenderingContext2DSettings) {
@@ -259,9 +263,15 @@ export function BrickCanvas({
   focalX = 0.5,
   focalY = 0.5,
   mediaDarken = 0,
-  active = true
+  active = true,
+  slowdown = 1
 }: BrickCanvasProps) {
   const kind = mediaKindFromSrc(src);
+  // Live playback rate, read by the running GIF loop each frame. Kept in a ref (not
+  // an effect dep) so a slowdown change re-times the NEXT frame in place instead of
+  // tearing down the loop and restarting the GIF from frame 0.
+  const slowdownRef = useRef(slowdown);
+  slowdownRef.current = slowdown;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imageElementRef = useRef<HTMLImageElement | null>(null);
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
@@ -512,17 +522,22 @@ export function BrickCanvas({
       const gifMedia = media as ComposedGif;
       let frameIndex = 0;
       const gifFrames = gifMedia.frames;
-      // Only animate while this route is on screen; off screen we leave the
-      // canvas frozen on its last frame instead of looping a hidden render.
-      if (active && gifFrames.length > 0) {
-        const drawNextGifFrame = () => {
-          if (stopped || gifFrames.length === 0) return;
-          const frame = gifFrames[frameIndex];
-          drawFrame(frame.source);
-          frameIndex = (frameIndex + 1) % gifFrames.length;
-          gifTimer = window.setTimeout(drawNextGifFrame, frame.delay);
-        };
-        drawNextGifFrame();
+      // Only animate while this route is on screen; off screen we still paint a
+      // single static frame (so the dimmed mosaic is present on every route, even
+      // on a direct load) but skip the loop instead of rendering a hidden one.
+      if (gifFrames.length > 0) {
+        if (active) {
+          const drawNextGifFrame = () => {
+            if (stopped || gifFrames.length === 0) return;
+            const frame = gifFrames[frameIndex];
+            drawFrame(frame.source);
+            frameIndex = (frameIndex + 1) % gifFrames.length;
+            gifTimer = window.setTimeout(drawNextGifFrame, frame.delay * Math.max(1, slowdownRef.current));
+          };
+          drawNextGifFrame();
+        } else {
+          drawFrame(gifFrames[0].source);
+        }
       }
     } else if (kind === "video") {
       const videoMedia = media as VideoFrameElement;

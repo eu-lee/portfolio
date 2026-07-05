@@ -323,6 +323,26 @@ button {
   opacity: 1;
 }
 
+/* The mosaic now sits behind every route. On about + projects a near-opaque black
+   veil drops it almost to black (leaving the faintest texture) so the foreground
+   reads cleanly; home leaves it at full brightness. Sits above the canvas
+   (z-index 1) but below the wire box (z-index 2). Tune --bg-dim to taste. */
+.page-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #000;
+  opacity: var(--bg-dim, 0);
+  transition: opacity var(--page-fade, 0.32s) ease-in-out;
+  pointer-events: none;
+}
+
+.hero.is-about,
+.hero.is-projects {
+  --bg-dim: 0.6;
+}
+
 .page-fg.is-active > * {
   pointer-events: auto;
 }
@@ -410,8 +430,8 @@ button {
 .hero-name {
   margin: 0;
   transform: translateX(-.055em);
-  font-family: "Archivo", system-ui, sans-serif;
-  font-weight: 900;
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
   font-size: var(--hero-name-size);
   letter-spacing: 0;
   word-spacing: .06em;
@@ -875,8 +895,8 @@ h3 {
 
 .stage-title {
   margin: 0;
-  font-family: "Archivo", system-ui, sans-serif;
-  font-weight: 900;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-weight: 800;
   font-size: clamp(34px, 5vw, 64px);
   line-height: 0.9;
   letter-spacing: -0.015em;
@@ -1006,23 +1026,20 @@ h3 {
   border: 0;
   background: transparent;
   cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.24s ease;
-  /* Each row is its own compositor layer so its size/opacity transition repaints
-     in isolation. Without this the rows share the GPU-promoted .page-fg texture,
+  /* Every row reads at full brightness — the ONLY thing that sets the active row
+     apart is its larger size (see the --*-size bumps below), not opacity/color. */
+  opacity: 1;
+  /* Each row is its own compositor layer so its size transition repaints in
+     isolation. Without this the rows share the GPU-promoted .page-fg texture,
      and when the active row resizes the layer isn't fully invalidated — leaving a
      ghost of the previous (larger) row, so the old and new sizes appear at once. */
   transform: translateZ(0);
   backface-visibility: hidden;
 }
-.rail-item:hover {
-  opacity: 0.75;
-}
 .rail-item.is-active {
   --name-size: clamp(19px, min(1.75vw, 2.65svh), 30px);
   --summary-size: clamp(12px, min(1.05vw, 1.6svh), 16px);
   --thumb-size: clamp(66px, min(5.9vw, 9svh), 108px);
-  opacity: 1;
 }
 .rail-item:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.5);
@@ -1046,7 +1063,13 @@ h3 {
   border-radius: 0;
   background: var(--dark);
   contain: layout paint;
-  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Text stays full-brightness on every row; only the thumbnail dims when the row
+     is inactive, so the active project's cover reads brightest. */
+  opacity: 0.4;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
+}
+.rail-item.is-active .rail-thumb {
+  opacity: 1;
 }
 .rail-thumb > * { width: 100%; height: 100%; }
 .rail-thumb img { display: block; object-fit: cover; }
@@ -1064,33 +1087,32 @@ h3 {
   min-width: 0;
 }
 .rail-name {
-  font-family: "Archivo", system-ui, sans-serif;
-  font-weight: 800;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-weight: 700;
   font-size: var(--name-size);
   letter-spacing: -0.005em;
   /* Keep every title on ONE line in both states. Without this the name wraps
      only in the active row (its font jumps to ~30px), so a longer title like
      "Plant Hopper" reads as two lines active but one line collapsed. */
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.55);
+  color: #fff;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
-  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.24s ease;
+  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .rail-date {
   /* Push the date to the right edge of the row so titles sit hard-left and dates
-     hard-right; padding-left keeps a gap if a long title reaches across. */
+     hard-right; padding-left keeps a gap if a long title reaches across. Font +
+     gap scale with the viewport like the rest of the rail. */
   margin-left: auto;
-  padding-left: 12px;
+  padding-left: clamp(10px, 0.9vw, 16px);
   flex: none;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: clamp(11px, min(0.95vw, 1.45svh), 15px);
   letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.5);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-  transition: color 0.24s ease;
 }
-.rail-item.is-active .rail-date { color: rgba(255, 255, 255, 0.5); }
 
 .rail-summary {
   display: -webkit-box;
@@ -1101,14 +1123,10 @@ h3 {
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--summary-size);
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.46);
+  color: rgba(255, 255, 255, 0.64);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.24s ease;
+  transition: font-size 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
-
-/* Active row: white name and clearer description. */
-.rail-item.is-active .rail-name { color: #fff; }
-.rail-item.is-active .rail-summary { color: rgba(255, 255, 255, 0.64); }
 
 /* Join the intro choreography: the field + right cell fade up with the same
    timing the hero uses for its text. */

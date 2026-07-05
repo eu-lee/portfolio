@@ -371,10 +371,19 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
       ref={heroRef}
       style={frameVars}
     >
-      {/* BACKGROUND layer (under the frame): the mosaic. Home only — on projects
-          and about it fades out, leaving the black field the wire box carves up. */}
-      <div className={`page-bg${isHome ? " is-active" : ""}`} aria-hidden={!isHome}>
-        <BrickCanvas src={heroBackground} grid={grid} focalY={0.22} mediaDarken={0.28} active={isHome} />
+      {/* BACKGROUND layer (under the frame): the full-bleed mosaic. Present and
+          animating on EVERY route now — on projects and about a dim overlay (see
+          .page-bg::after in CSS) drops it down so the text/catalogue reads cleanly,
+          while home shows it at full brightness. */}
+      <div className="page-bg is-active" aria-hidden={!isHome}>
+        <BrickCanvas
+          src={heroBackground}
+          grid={grid}
+          focalY={0.22}
+          mediaDarken={0.28}
+          active
+          slowdown={isHome ? 1 : 3}
+        />
       </div>
 
       {/* PERSISTENT wire box (drawn once, shared by both routes). Two layers: the
@@ -463,7 +472,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         <div className="hero-content" style={fieldStyle}>
           <h1 className="hero-name">Eugene Lee</h1>
           <p className="hero-tagline">
-            Software Engineering @ the University of Waterloo
+            SE @ UWaterloo
           </p>
         </div>
       </div>
