@@ -3,7 +3,7 @@ order:
 title: Plant Hopper
 date: 2025-11
 featured: false
-cover: images/planthopper.png
+cover: images/planthopper.jpg
 summary: Automatic plant watering turret.
 links:
   - label: Devpost
