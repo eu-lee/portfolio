@@ -514,7 +514,7 @@ export function BrickCanvas({
       ctx.fillRect(0, deviceHeight - BOTTOM_SOLID_ROWS * cell, deviceWidth, BOTTOM_SOLID_ROWS * cell);
     };
 
-    const frameMs = 1000 / 30;
+    const frameMs = 1000 / 24;
     let animationFrame = 0;
     let videoFrame = 0;
     let gifTimer = 0;
