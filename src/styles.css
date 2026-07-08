@@ -31,7 +31,9 @@ body,
 body {
   margin: 0;
   color: var(--ink);
-  background: var(--paper);
+  /* Match the hero's black border so nothing cream flashes before first paint
+     or peeks through on mobile overscroll rubber-banding. */
+  background: #000;
   font-family: "Space Grotesk", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
