@@ -310,13 +310,43 @@ export function BrickCanvas({
     };
   }, [kind, src]);
 
+  // Start playback as soon as the element exists — NOT gated on `ready`. Mobile
+  // Safari ignores `preload` and won't fetch/decode any video data until
+  // playback is requested, so gating play() on the loadeddata event deadlocks
+  // there: no data -> no `ready` -> no play() -> no data, and the wall stays
+  // black. Calling play() is itself what makes the data (and loadeddata)
+  // arrive. Two more mobile-autoplay accommodations: React sets the `muted`
+  // DOM property but never renders the attribute (facebook/react#10389), so
+  // re-assert the muted state explicitly before asking to play; and if the
+  // policy still refuses (iOS Low Power Mode, Android data saver), retry on
+  // the first user gesture instead of giving up.
   useEffect(() => {
-    if (kind !== "video" || !ready) return undefined;
+    if (kind !== "video") return undefined;
     const video = videoElementRef.current;
     if (!video) return undefined;
-    video.play().catch(() => {});
-    return () => video.pause();
-  }, [kind, ready, src]);
+    video.defaultMuted = true;
+    video.muted = true;
+    let disposed = false;
+    const onGesture = () => {
+      if (!disposed) tryPlay();
+    };
+    const tryPlay = () => {
+      video.play().catch(() => {
+        if (disposed) return;
+        // pointerup (not pointerdown) is what grants the transient user
+        // activation play() needs; keydown covers keyboard-only visitors.
+        window.addEventListener("pointerup", onGesture, { once: true });
+        window.addEventListener("keydown", onGesture, { once: true });
+      });
+    };
+    tryPlay();
+    return () => {
+      disposed = true;
+      window.removeEventListener("pointerup", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      video.pause();
+    };
+  }, [kind, src]);
 
   // Mirror the GIF slowdown for the video path. Off the home route the mosaic is
   // dimmed and its motion eased: the GIF stretches each frame's delay by
@@ -604,6 +634,7 @@ export function BrickCanvas({
           ref={videoElementRef}
           className="brick-media-source"
           src={src}
+          autoPlay
           muted
           loop
           playsInline

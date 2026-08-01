@@ -106,6 +106,27 @@ const ICONS = {
 
 type Route = "home" | "about" | "projects";
 
+// Compact (mobile) layout kicks in when the viewport is too narrow for the
+// side-by-side stage/rail split OR too short for the vertical rail list — both
+// directions of squish collapse into the same stacked layout instead of letting
+// the desktop cells crush into each other. Kept as a JS state (not just CSS)
+// because the desktop geometry (navWireX, fieldStyle/railStyle) is applied as
+// inline styles, which have to be withheld for the compact CSS to take over.
+const COMPACT_QUERY = "(max-width: 760px), (max-height: 460px)";
+
+function useCompactMode(): boolean {
+  const [isCompact, setIsCompact] = useState(
+    () => window.matchMedia(COMPACT_QUERY).matches
+  );
+  useEffect(() => {
+    const media = window.matchMedia(COMPACT_QUERY);
+    const onChange = () => setIsCompact(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+  return isCompact;
+}
+
 type PortfolioProps = {
   route: Route;
   onOpenProject: (project: Project) => void;
@@ -124,6 +145,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const linksRef = useRef<HTMLElement | null>(null);
   const grid = useStudGrid(heroRef);
+  const isCompact = useCompactMode();
 
   // First-load choreography (once): when the grid resolves so the wires land on
   // their real positions, flip on `is-intro-ready` to play the staged wire-draw
@@ -277,7 +299,12 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     const rail = railRef.current;
     if (!rail) return;
     const max = rail.scrollHeight - rail.clientHeight;
-    const progress = max > 0 ? Math.min(1, Math.max(0, rail.scrollTop / max)) : 0;
+    // Compact mode turns the rail into a horizontal filmstrip (no vertical
+    // scroll length — the spacer is hidden), so there is no progress to map;
+    // without this bail a stray scroll event would compute progress 0 and
+    // yank the active project back to the first entry.
+    if (max <= 0) return;
+    const progress = Math.min(1, Math.max(0, rail.scrollTop / max));
     const pos = progress * (projects.length - 1);
     const current = activeIndexRef.current;
     // During a click/keyboard glide, swallow the intermediate steps and only
@@ -312,7 +339,15 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     const next = Math.min(projects.length - 1, Math.max(0, index));
     setActiveIndex(next);
     const rail = railRef.current;
-    if (rail && projects.length > 1) {
+    if (isCompact) {
+      // Filmstrip mode: no progress mapping — just slide the chosen thumbnail
+      // into view. block:"nearest" keeps ancestors from scrolling vertically.
+      projectButtonRefs.current[next]?.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest"
+      });
+    } else if (rail && projects.length > 1) {
       const max = rail.scrollHeight - rail.clientHeight;
       // Lock out intermediate scroll updates for the duration of the glide so
       // the stage jumps straight to `next` instead of flipping through every
@@ -328,12 +363,18 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
     if (focus) projectButtonRefs.current[next]?.focus();
   };
 
-  // Up/Down move the active project and carry focus with them; tab + enter on the
-  // individual buttons works on its own.
+  // Up/Down (and Left/Right, matching the compact horizontal filmstrip) move the
+  // active project and carry focus with them; tab + enter on the individual
+  // buttons works on its own.
   const onRailKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const dir =
+      event.key === "ArrowDown" || event.key === "ArrowRight"
+        ? 1
+        : event.key === "ArrowUp" || event.key === "ArrowLeft"
+          ? -1
+          : 0;
+    if (!dir) return;
     event.preventDefault();
-    const dir = event.key === "ArrowDown" ? 1 : -1;
     selectProject(activeIndexRef.current + dir, true);
   };
 
@@ -354,20 +395,22 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
 
   // The wire box is shared with the hero and never moves: the stage spans from the
   // left wire to the same nav divider the hero measured, and the index rail
-  // occupies the cell beyond it. Both start under the nav-band.
+  // occupies the cell beyond it. Both start under the nav-band. In compact mode
+  // there is no right cell — the inline geometry is withheld entirely so the
+  // .is-compact CSS rules (full-width stage, bottom filmstrip) position things.
   const fieldStyle: CSSProperties | undefined =
-    f && navWireX != null
+    !isCompact && f && navWireX != null
       ? { left: `${f.leftPx}px`, width: `${navWireX - f.leftPx}px` }
       : undefined;
   // railStyle spans the divider -> right wire cell; shared by projects and about.
   const railStyle: CSSProperties | undefined =
-    f && navWireX != null
+    !isCompact && f && navWireX != null
       ? { left: `${navWireX}px`, width: `${f.rightPx - navWireX}px` }
       : undefined;
 
   return (
     <section
-      className={`hero is-${route} is-intro${introReady ? " is-intro-ready" : ""}`}
+      className={`hero is-${route} is-intro${introReady ? " is-intro-ready" : ""}${isCompact ? " is-compact" : ""}`}
       ref={heroRef}
       style={frameVars}
     >
@@ -417,7 +460,7 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         <nav
           className="hero-links"
           ref={linksRef}
-          style={navWidth != null ? { width: `calc(${navWidth}px - (2 * var(--nav-pad)))` } : undefined}
+          style={!isCompact && navWidth != null ? { width: `calc(${navWidth}px - (2 * var(--nav-pad)))` } : undefined}
         >
           <a
             href="/"

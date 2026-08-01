@@ -31,7 +31,9 @@ body,
 body {
   margin: 0;
   color: var(--ink);
-  background: var(--paper);
+  /* Match the hero's black border so nothing cream flashes before first paint
+     or peeks through on mobile overscroll rubber-banding. */
+  background: #000;
   font-family: "Space Grotesk", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -692,6 +694,24 @@ h3 {
   box-shadow: 0 22px 70px rgba(0, 0, 0, .28);
 }
 
+/* Every scrollable region hides its scrollbar — the wireframe look stays clean
+   and scroll position is already communicated by the content itself (the rail
+   highlight, the stage's top fade). Scrolling still works via wheel/touch/keys. */
+.projects-stage,
+.projects-rail,
+.about-panel,
+.project-dialog {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.projects-stage::-webkit-scrollbar,
+.projects-rail::-webkit-scrollbar,
+.about-panel::-webkit-scrollbar,
+.project-dialog::-webkit-scrollbar {
+  display: none;
+}
+
 .dialog-close {
   position: absolute;
   top: 12px;
@@ -778,22 +798,6 @@ h3 {
 }
 
 @media (max-width: 720px) {
-  .hero-content {
-    max-width: min(calc(var(--wire-right) - var(--wire-left)), 44ch);
-  }
-
-  .hero-tagline {
-    max-width: 42ch;
-  }
-
-  .hero-socials {
-    flex-wrap: wrap;
-  }
-
-  .hero-links {
-    gap: 18px;
-  }
-
   .section-heading {
     display: block;
   }
@@ -1172,11 +1176,6 @@ h3 {
   }
 }
 
-/* Narrow screens: shrink the stage title; the frame stays viewport-locked so the
-   shared brick wall keeps covering it (same as the hero). */
-@media (max-width: 760px) {
-  .stage-title { font-size: clamp(28px, 8vw, 44px); }
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    /about — static about page using the same left field + right rail geometry as
@@ -1193,9 +1192,11 @@ h3 {
 .about-panel {
   left: var(--wire-left); /* inline override snaps to the divider */
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: var(--frame-pad);
+  /* Overflow-safe centering: the child's auto margins center it when it fits and
+     collapse to 0 when it doesn't (unlike align/justify center, which would clip
+     the top un-scrollably). Scrollbar hidden with the other scrollables above. */
+  overflow-y: auto;
 }
 
 .about-markdown {
@@ -1204,6 +1205,7 @@ h3 {
   gap: clamp(14px, 2.5svh, 30px);
   width: fit-content;
   max-width: min(90%, 1040px);
+  margin: auto;
   text-align: left;
 }
 
@@ -1259,23 +1261,6 @@ h3 {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
-@media (max-width: 760px) {
-  .about-panel {
-    padding: var(--frame-pad);
-  }
-
-  .about-markdown {
-    gap: 14px;
-  }
-
-  .about-md-heading {
-    font-size: clamp(18px, 5.2vw, 26px);
-  }
-
-  .about-md-paragraph {
-    font-size: clamp(11px, 3.4vw, 14px);
-  }
-}
 
 /* Join the intro choreography with the same timing as the hero text. */
 .hero.is-intro .about-panel {
@@ -1289,4 +1274,170 @@ h3 {
     opacity: 1;
     animation: none;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Compact (mobile / cramped) layout — .is-compact, set from App.tsx when the
+   viewport matches (max-width: 760px) or (max-height: 460px). The desktop
+   two-column split (stage | rail) collapses into a stacked layout while the
+   theme survives intact: the wire box, the mosaic, the top nav band and the
+   intro choreography are all untouched. What changes:
+
+   - The vertical nav divider (middle wire) disappears — there is no right
+     column — and the three nav links spread evenly across the whole top band.
+   - Home keeps the nameplate/tagline bottom-left; the contact icons move to
+     the bottom-right corner of the frame, on the same baseline.
+   - Projects: the stage spans the full frame width and top-anchors its content
+     (scrolling when it overflows); the index rail becomes a horizontal
+     thumbnail filmstrip pinned above the bottom wire, fenced off by its own
+     horizontal wire that mirrors the nav band above.
+   - About spans the full frame width and scrolls when the text overflows.
+
+   App.tsx withholds the measured inline geometry (fieldStyle / railStyle / nav
+   width) in compact mode, so the rules below are the only positioning.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.hero.is-compact {
+  /* Overlay type rescaled for small frames; svh terms keep the short-viewport
+     (landscape phone) trigger in check just like the desktop clamps. */
+  --hero-name-size: clamp(36px, min(11.5vw, 12svh), 72px);
+  --hero-link-size: clamp(12px, min(3.4vw, 2.4svh), 15px);
+  --hero-copy-size: clamp(12px, min(3.2vw, 2.1svh), 15px);
+  --hero-icon-size: clamp(16px, min(4.6vw, 3svh), 20px);
+  /* Height of the projects filmstrip band above the bottom wire. */
+  --rail-strip-h: clamp(70px, min(13svh, 22vw), 104px);
+}
+
+/* No right column: drop the middle wire and let the links span the whole nav
+   band — space-evenly (from the base rule) balances them across the frame.
+   Hidden with visibility, NOT display: toggling display restarts the element's
+   CSS animations, so leaving compact mode would replay the intro's full-bleed
+   draw + dissolve sweep on this wire. visibility keeps the (long-finished)
+   intro animations' state intact — the line simply appears/disappears. */
+.hero.is-compact .frame-line.is-nav-down {
+  visibility: hidden;
+}
+
+.hero.is-compact .hero-links {
+  width: 100%;
+}
+
+/* Contact icons anchor to the bottom-RIGHT corner of the frame, level with the
+   tagline in the bottom-left (both pad up from the wire by --frame-pad-bottom). */
+.hero.is-compact .hero-socials {
+  left: auto;
+  right: var(--wire-right-inset);
+}
+
+/* On compact projects the filmstrip owns the bottom band, so the icons bow out
+   (they stay available on home and about). */
+.hero.is-compact.is-projects .hero-socials {
+  display: none;
+}
+
+/* ── Projects: full-width stage over a bottom filmstrip ── */
+
+.hero.is-compact .projects-stage {
+  left: var(--wire-left);
+  right: var(--wire-right-inset);
+  bottom: calc(var(--wire-bottom-inset) + var(--rail-strip-h));
+}
+
+/* Top-anchor the stage content: the measured --stage-lead centering is a
+   desktop luxury — on a short stage the cover + title + meta already fill it,
+   so the block starts at the top and simply scrolls. */
+.hero.is-compact .stage-inner {
+  margin-top: 0;
+  max-width: 100%;
+}
+
+.hero.is-compact .stage-title {
+  font-size: clamp(28px, min(8vw, 6svh), 44px);
+}
+
+/* Cap the cover's height so short (landscape) viewports don't open on a
+   stage-filling video with the title below the fold. When the cap binds the
+   2:1 aspect gives way instead of the width: images crop via object-fit and
+   the YouTube iframe letterboxes itself. Portrait phones never hit the cap. */
+.hero.is-compact .stage-cover {
+  max-height: min(46svh, 340px);
+}
+
+/* The rail collapses into a horizontal filmstrip of thumbnails pinned above
+   the bottom wire. Its top border is the wire fencing it off — the bottom
+   mirror of the nav-under divider (drawn here rather than in .hero-frame so it
+   only exists with the projects layer and fades with it). */
+.hero.is-compact .projects-rail {
+  top: auto;
+  left: var(--wire-left);
+  right: var(--wire-right-inset);
+  bottom: var(--wire-bottom-inset);
+  height: var(--rail-strip-h);
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid #8b9296;
+}
+
+.hero.is-compact .projects-rail-track {
+  position: static;
+  flex-direction: row;
+  align-items: center;
+  /* Centered while the thumbs fit; once they overflow, width:max-content makes
+     the track grow from the left edge so horizontal scroll reaches everything. */
+  justify-content: center;
+  width: max-content;
+  min-width: 100%;
+  height: 100%;
+  gap: clamp(14px, 4vw, 24px);
+  padding: 0 var(--frame-pad);
+}
+
+/* The vertical scroll length is meaningless here — hiding it also zeroes the
+   rail's scrollable height, which App.tsx uses to skip the progress mapping. */
+.hero.is-compact .projects-rail-spacer {
+  display: none;
+}
+
+.hero.is-compact .rail-item {
+  --thumb-size: clamp(38px, calc(var(--rail-strip-h) - 34px), 62px);
+  width: auto;
+  height: auto;
+}
+
+.hero.is-compact .rail-item.is-active {
+  --thumb-size: clamp(48px, calc(var(--rail-strip-h) - 18px), 80px);
+}
+
+/* Thumbs only — the name/summary/date live on the stage now. */
+.hero.is-compact .rail-copy {
+  display: none;
+}
+
+.hero.is-compact .rail-row {
+  align-items: center;
+}
+
+.hero.is-compact .rail-item.is-active .rail-thumb {
+  border-color: #fff;
+}
+
+/* ── About: full-width panel ── */
+
+.hero.is-compact .about-panel {
+  left: var(--wire-left);
+  right: var(--wire-right-inset);
+  /* Keep long text clear of the contact icons overlaying the bottom-right. */
+  padding-bottom: calc(var(--frame-pad-bottom) + var(--hero-icon-size) + 10px);
+}
+
+.hero.is-compact .about-markdown {
+  gap: clamp(12px, 2.5svh, 18px);
+}
+
+.hero.is-compact .about-md-heading {
+  font-size: clamp(22px, min(6vw, 5svh), 34px);
+}
+
+.hero.is-compact .about-md-paragraph {
+  font-size: clamp(13px, min(3.6vw, 2.4svh), 16px);
 }
