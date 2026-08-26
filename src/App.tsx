@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { projects, type Project } from "./data/projects";
 import { BrickCanvas } from "./components/BrickCanvas";
 import { useStudGrid } from "./lib/heroGrid";
-import heroBackground from "../content/backgrounds/bkg4.mp4";
+import heroBackground from "../content/backgrounds/bkg.mp4";
 import aboutMarkdown from "../content/about/index.md?raw";
 
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
@@ -422,10 +422,10 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         <BrickCanvas
           src={heroBackground}
           grid={grid}
-          focalY={0.22}
-          mediaDarken={0.28}
+          focalY={1}
+          mediaDarken={0.1}
           active
-          slowdown={isHome ? 1.5 : 3}
+          slowdown={isHome ? 2 : 3}
         />
       </div>
 
