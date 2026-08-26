@@ -422,8 +422,8 @@ function Portfolio({ route, onOpenProject }: PortfolioProps) {
         <BrickCanvas
           src={heroBackground}
           grid={grid}
-          focalY={1}
-          mediaDarken={0.1}
+          focalY={0.5}
+          mediaDarken={0.3}
           active
           slowdown={isHome ? 2 : 3}
         />
